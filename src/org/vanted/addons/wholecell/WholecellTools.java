@@ -3,6 +3,9 @@ package org.vanted.addons.wholecell;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyVetoException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,10 +17,14 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import javax.swing.JInternalFrame;
+import javax.swing.SwingUtilities;
 import javax.ws.rs.core.MediaType;
 
 import org.AttributeHelper;
 import org.graffiti.attributes.CollectionAttribute;
+import org.graffiti.editor.GraffitiInternalFrame;
+import org.graffiti.editor.GravistoService;
 import org.graffiti.editor.LoadSetting;
 import org.graffiti.editor.MainFrame;
 import org.graffiti.graph.AdjListGraph;
@@ -32,8 +39,10 @@ import org.graffiti.plugin.parameter.ObjectListParameter;
 import org.graffiti.plugin.parameter.Parameter;
 import org.graffiti.selection.Selection;
 import org.graffiti.selection.SelectionModel;
+import org.graffiti.util.InstanceLoader;
 import org.sbml.jsbml.xml.XMLNode;
 
+import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.gui.dbe.SplitNodeForSingleMappingData;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBMLReactionHelper;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBMLSpeciesHelper;
@@ -62,16 +71,15 @@ import de.ipk_gatersleben.ag_nw.graffiti.services.web.RestService;
  * selecting it in the overview graph.
  * 
  * @author Michael Aichem, Tobias Czauderna
- * 
  */
 public class WholecellTools {
-
+	
 	/**
 	 * Stating whether the initialisation tasks (grabbing SBML model data,
 	 * constructing initial network) have been run so far.
 	 */
 	private static boolean initialised = false;
-
+	
 	/**
 	 * Stating whether the initialisation tasks (grabbing SBML model data,
 	 * constructing initial network) have been run so far.
@@ -81,30 +89,30 @@ public class WholecellTools {
 	public static boolean isInitialised() {
 		return initialised;
 	}
-
+	
 	/**
 	 * Reference to the UI tab in the system in order to manipulate the displayed
 	 * content.
 	 */
 	private static WholecellTab myTab;
-
+	
 	/**
 	 * Sets the corresponding UI tab.
 	 * 
 	 * @param myTab
-	 *            The tab to be set
+	 *           The tab to be set
 	 */
 	public static void setMyTab(WholecellTab myTab) {
 		WholecellTools.myTab = myTab;
 	}
-
+	
 	/**
 	 * This is a list of species that may be cloned as they are not at all specific
 	 * to a certain model. But this may cause problems due to their hard-coded
 	 * nature.
 	 */
 	private static ArrayList<String> clonableSpecies = new ArrayList<>();
-
+	
 	/**
 	 * Returns the list of clonable species.
 	 * 
@@ -113,28 +121,28 @@ public class WholecellTools {
 	public static ArrayList<String> getClonableSpecies() {
 		return clonableSpecies;
 	}
-
+	
 	/**
 	 * The degree threshold. Any (clonable) species with degree greater or equal to
 	 * this threshold will be replaced by clones in the respective step.
 	 */
 	private static int clonableSpeciesThreshold = 8;
-
+	
 	/**
 	 * Sets the clonable species threshold.
 	 * 
 	 * @param clonableSpeciesThreshold
-	 *            the threshold to be set for clonable species
+	 *           the threshold to be set for clonable species
 	 */
 	public static void setClonableSpeciesThreshold(int clonableSpeciesThreshold) {
 		WholecellTools.clonableSpeciesThreshold = clonableSpeciesThreshold;
 	}
-
+	
 	/**
 	 * ?
 	 */
 	private static String extracellularCompartmentID = "e";
-
+	
 	/**
 	 * When we use KEGG annotations to derive subsystems, there are reactions that
 	 * have assigned more than one KEGG pathway. Thus, we need to decide which ones
@@ -142,7 +150,7 @@ public class WholecellTools {
 	 * out of a minimum number of reactions to be viable.
 	 */
 	private static int minimumReactionsPerKeggSubsystem = 5;
-
+	
 	/**
 	 * These are the global and overview pathway maps from KEGG. They are not
 	 * considered to be subsystems in our system, as they do not refer to actual
@@ -153,100 +161,100 @@ public class WholecellTools {
 					"Microbial metabolism in diverse environments", "Biosynthesis of antibiotics", "Carbon metabolism",
 					"2-Oxocarboxylic acid metabolism", "Fatty acid metabolism", "Degradation of aromatic compounds",
 					"Biosynthesis of amino acids" }));
-
+	
 	/**
 	 * The initial huge graph to be decomposed / explored.
 	 */
 	private static Graph initialGraph;
-
+	
 	/**
 	 * Shortcut to the species from the inital graph.
 	 */
 	private static ArrayList<Node> speciesFromInitialGraph = new ArrayList<>();
-
+	
 	/**
 	 * Shortcut to the reactions from the inital graph.
 	 */
 	private static ArrayList<Node> reactionsFromInitialGraph = new ArrayList<>();
-
+	
 	/**
 	 * Shortcut to those reactions from the inital graph that have a KEGG subsystem
 	 * annotation.
 	 */
 	private static ArrayList<Node> reactionsWithKeggSubsystem = new ArrayList<>();
-
+	
 	/**
 	 * Shortcut to the subsystem nodes in the overview graph.
 	 */
 	private static ArrayList<Node> subsystemNodes = new ArrayList<>();
-
+	
 	/**
 	 * A HashMap that maps a degree to the number of species in the initial graph
 	 * that have this degree.
 	 */
 	private static int[] degreeSpecies;
-
+	
 	/**
 	 * Shortcut to those species in the original graph that have been identified to
 	 * be interfaces between two (or more) subsystems. Besides the subsystem nodes,
 	 * they will also be part of the overview graph.
 	 */
 	private static ArrayList<Node> interfaceMetabolites = new ArrayList<>();
-
+	
 	/**
 	 * Shortcut to the interface nodes in the overview graph.
 	 */
 	private static ArrayList<Node> interfaceMetabolitesInOverviewGraph = new ArrayList<>();
-
+	
 	/**
 	 * Shortcut to the subsystem nodes in the overview graph - stored as map to
 	 * ensure accessibility also via the name of a particular subsystem.
 	 */
 	private static Map<String, Node> subsystemNameMap = new HashMap<>();
-
+	
 	/**
 	 * This Map is used to map a subsystem node to its actual subsystem subgraph of
 	 * the original graph.
 	 */
 	private static Map<Node, Graph> subsystemGraphMap = new HashMap<>();
-
+	
 	/**
 	 * A HashSet that contains the names of all yet classified subsystems.
 	 */
 	private static HashSet<String> subsystems = new HashSet<>();
-
+	
 	/**
 	 * The overview graph that contains all detected subsystems and their relations.
 	 */
 	private static Graph overviewGraph;
-
+	
 	/**
 	 * The rest service for the KEGG requests.
 	 */
 	private static RestService restService = new RestService("http://rest.kegg.jp/get/");
-
+	
 	/**
 	 * The tag used in the SBML file to store the KEGG (reation) id.
 	 */
 	private static String keggTag = "KEGG";
-
+	
 	/**
 	 * The tag used in the SBML file to store the SUBSYSTEM anme.
 	 */
 	private static String subsAnnTag = "SUBSSTEM";
-
+	
 	/**
 	 * The character(sequence) that is used to separate KEGG IDs in the SBML
 	 * annotations.
 	 */
 	private static String keggSep;
-
+	
 	/**
 	 * The character(sequence) that is used to separate SUBSYSTEM names in the SBML
 	 * annotations.
 	 */
 	private static String annotSep;
-
+	
 	/**
 	 * This method initialises the whole procedure by reading the information from
 	 * the SBML model that underlies the network from the currently active editor
@@ -260,7 +268,7 @@ public class WholecellTools {
 		initialised = true;
 		myTab.logMsg("Finished initialisation tasks.");
 	}
-
+	
 	/**
 	 * This method executes the decomposition process. During this, it queries the
 	 * UI tab to get the necessary parameters that might have been set by the user.
@@ -276,39 +284,39 @@ public class WholecellTools {
 				subsAnnTag = myTab.getAnnotTag();
 				keggSep = myTab.getKeggSep();
 				annotSep = myTab.getAnnotSep();
-
+				
 				reset();
 				myTab.logMsg("Reset all involved values.");
-
+				
 				if (!myTab.isEditedCloneList()) {
 					clonableSpecies = getSpeciesAboveDegThreshold(myTab.getClonableSpeciesThreshold());
 				}
 				cloneSpecies();
-
+				
 				String decompMethod = myTab.getDecompMethod();
 				switch (decompMethod) {
-				case WholecellConstants.DECOMP_KEGG:
-					(new KeggRequestUtils()).request();
-					decompKeggAnn();
-					break;
-				case WholecellConstants.DECOMP_SUBSANN:
-					decompSubsAnn();
-					break;
-				default:
-					break;
+					case WholecellConstants.DECOMP_KEGG:
+						(new KeggRequestUtils()).request();
+						decompKeggAnn();
+						break;
+					case WholecellConstants.DECOMP_SUBSANN:
+						decompSubsAnn();
+						break;
+					default:
+						break;
 				}
-
+				
 				addTransporterSubsystem();
 				addDefaultSubsystem();
-
+				
 				String layoutAlgorithmOverviewGraph = myTab.getLayoutAlgorithmOverviewGraph();
 				// boolean useSbgnForOverviewGraph = myTab.isUseSbgnForOverviewGraph();
 				(new OverviewGraphUtils()).run(layoutAlgorithmOverviewGraph);
-
+				
 			}
 		};
 	}
-
+	
 	/**
 	 * This method opens the subgraph that corresponds to the selected subsystem.
 	 * 
@@ -318,14 +326,14 @@ public class WholecellTools {
 	public static ActionListener openSubsystemViews() {
 		return new ActionListener() {
 			public void actionPerformed(ActionEvent actionEvent) {
-
+				
 				SelectionModel selectionModel = MainFrame.getInstance().getActiveEditorSession().getSelectionModel();
 				showSubsystemGraphOf(selectionModel.getActiveSelection().getNodes());
-
+				
 			}
 		};
 	}
-
+	
 	/**
 	 * This method resets all of the values that are going to be changed during the
 	 * execution to defaults to ensure that repeated executions all have the same
@@ -334,14 +342,14 @@ public class WholecellTools {
 	private static void reset() {
 		// TODO implement method.
 	}
-
+	
 	/**
 	 * Returns the number of species in the original graph that have a degree of at
 	 * least {@link degree}
 	 * 
 	 * @param degree
-	 *            The lower bound for the degree that we want the number of species
-	 *            from
+	 *           The lower bound for the degree that we want the number of species
+	 *           from
 	 * @return The number of species in the original graph that have a degree of at
 	 *         least {@link degree}
 	 */
@@ -363,13 +371,13 @@ public class WholecellTools {
 		}
 		return -1;
 	}
-
+	
 	/**
 	 * Returns all species as a list of Strings that have a degree of at least
 	 * {@link degree}
 	 * 
 	 * @param degree
-	 *            The lower bound for the degree that we want the species from
+	 *           The lower bound for the degree that we want the species from
 	 * @return All species as a list of Strings that have a degree of at least
 	 *         {@link degree}
 	 */
@@ -384,36 +392,36 @@ public class WholecellTools {
 		}
 		return res;
 	}
-
+	
 	/**
 	 * this method grabs the graph from the current active editor session and stores
 	 * it into {@link initialGraph}.
-	 * 
 	 * Moreover, the nodes are traversed in order to instantiate
 	 * {@link speciesFromInitialGraph} and {@link reactionsFromInitialGraph}.
 	 */
 	private static void grabGraph() {
-
+		
 		if (MainFrame.getInstance().getActiveEditorSession() == null) {
 			return;
 		}
-
+		
 		initialGraph = MainFrame.getInstance().getActiveEditorSession().getGraph();
-
+		
 		for (Node node : initialGraph.getNodes()) {
 			if (isReaction(node)) {
 				reactionsFromInitialGraph.add(node);
-			} else if (isSpecies(node)) {
-				speciesFromInitialGraph.add(node);
-			}
+			} else
+				if (isSpecies(node)) {
+					speciesFromInitialGraph.add(node);
+				}
 		}
 		myTab.setLabelGeneralInfoMet(String.valueOf(speciesFromInitialGraph.size()));
 		myTab.setLabelGeneralInfoReac(String.valueOf(reactionsFromInitialGraph.size()));
 		myTab.setLabelSliderCorrespSpeciesNumber(
 				String.valueOf(numberOfSpeciesWithDegreeAtLeast(myTab.getClonableSpeciesThreshold())));
-
+		
 	}
-
+	
 	/**
 	 * Reads the notes in the SBML file that underlies the graph from the current
 	 * editor session. Aftwerwards, we have the SUBSYSTEM note stored in the node
@@ -421,10 +429,10 @@ public class WholecellTools {
 	 * attribute "kegg_rid"
 	 */
 	private static void readNotes() {
-
+		
 		SBMLReactionHelper sbmlReactionHelper = new SBMLReactionHelper(initialGraph);
 		SBMLSpeciesHelper sbmlSpeciesHelper = new SBMLSpeciesHelper(initialGraph);
-
+		
 		for (Node reactionNode : reactionsFromInitialGraph) {
 			if (AttributeHelper.hasAttribute(reactionNode, SBML_Constants.SBML, SBML_Constants.REACTION_NOTES)) {
 				XMLNode notes = sbmlReactionHelper.getNotes(reactionNode);
@@ -442,7 +450,7 @@ public class WholecellTools {
 							readNote(reactionNode, grandChild, "PROTEIN_CLASS", "protein_class");
 							readNote(reactionNode, grandChild, "SOURCE", "source_model");
 							readNote(reactionNode, grandChild, subsAnnTag, WholecellConstants.SUBSYSTEM + "_ANNOTATED");
-
+							
 							// In this case, the actual notes are on the third level of the SBML hierarchy.
 						} else {
 							int numGrandGrandChildren = grandChild.getNumChildren();
@@ -486,22 +494,22 @@ public class WholecellTools {
 				}
 			}
 		}
-
+		
 	}
-
+	
 	/**
 	 * Reads the information contained in a given xml node and stores this as an
 	 * attribute of a given node.
 	 * 
 	 * @param node
-	 *            the node for which the note is to be stored as an attribute
+	 *           the node for which the note is to be stored as an attribute
 	 * @param xmlNode
-	 *            the xml node containing the information that is to be stored
+	 *           the xml node containing the information that is to be stored
 	 * @param noteName
-	 *            the expected name of the note contained in the xml node
+	 *           the expected name of the note contained in the xml node
 	 * @param noteAttributeName
-	 *            the name of the node attribute that is going to be created for the
-	 *            node
+	 *           the name of the node attribute that is going to be created for the
+	 *           node
 	 */
 	private static void readNote(Node node, XMLNode xmlNode, String noteName, String noteAttributeName) {
 		if (xmlNode.isText() && xmlNode.getCharacters().trim().startsWith(noteName + ":")) {
@@ -512,7 +520,7 @@ public class WholecellTools {
 			}
 		}
 	}
-
+	
 	/**
 	 * This method clones the species specified in the {@link clonableSpecies} list.
 	 */
@@ -527,7 +535,7 @@ public class WholecellTools {
 		SelectionModel selectionModel = MainFrame.getInstance().getActiveEditorSession().getSelectionModel();
 		selectionModel.setActiveSelection(selection);
 		selectionModel.selectionChanged();
-
+		
 		// split species using split nodes algorithm
 		Algorithm splitNodeForSingleMappingData = new SplitNodeForSingleMappingData();
 		splitNodeForSingleMappingData.attach(initialGraph, selection);
@@ -538,13 +546,13 @@ public class WholecellTools {
 				new BooleanParameter(false, "", ""), new BooleanParameter(true, "", "") });
 		splitNodeForSingleMappingData.execute();
 	}
-
+	
 	/**
 	 * This inner class contains the methods that are required for the decomposotion
 	 * based on KEGG identifiers. This includes the querying of the KEGG REST API.
 	 */
 	private static class KeggRequestUtils {
-
+		
 		/**
 		 * For each reaction, we send an HTTP request to KEGG, containing the attribute
 		 * "kegg_rid", querying the pathways that belong to the reaction. These are then
@@ -562,7 +570,7 @@ public class WholecellTools {
 					reactionsWithKeggRid.add(reactionNode);
 				}
 			}
-
+			
 			ArrayList<Node> reactionPackage;
 			String[] res;
 			int packageStart = 0;
@@ -595,12 +603,12 @@ public class WholecellTools {
 				}
 			}
 		}
-
+		
 		/**
 		 * Sending HTTP requests to KEGG for a whole package of up to 10 reactions.
 		 * 
 		 * @param reactionPackage
-		 *            The package of reaction nodes to be requested
+		 *           The package of reaction nodes to be requested
 		 * @return a list of request result Strings
 		 */
 		private String[] requestPackage(ArrayList<Node> reactionPackage) {
@@ -621,7 +629,7 @@ public class WholecellTools {
 			response = response.substring(0, response.length() - 3);
 			return response.split(WholecellConstants.KEGGSEP);
 		}
-
+		
 		/**
 		 * Store the results from the KEGG requests as node attributes of the respective
 		 * reaction nodes. The individual pathways are then stored as node attributes
@@ -630,9 +638,9 @@ public class WholecellTools {
 		 * by position. This method assumes both lists to have the same length.
 		 * 
 		 * @param reactionNodes
-		 *            The nodes that have been requested
+		 *           The nodes that have been requested
 		 * @param requestResults
-		 *            The results from the request
+		 *           The results from the request
 		 */
 		private void processPackageResults(ArrayList<Node> reactionNodes, String[] requestResults) {
 			for (int i = 0; i < reactionNodes.size(); i++) {
@@ -641,7 +649,7 @@ public class WholecellTools {
 				processSingleNode(reactionNode, response);
 			}
 		}
-
+		
 		/**
 		 * This method also expects a list of reaction nodes but in contrast to
 		 * {@link requestPackage} it requests AND processes (stores the results as
@@ -650,7 +658,7 @@ public class WholecellTools {
 		 * {@link requestPackage}.
 		 * 
 		 * @param reactionPackage
-		 *            A list of reaction nodes that will be requested and directly
+		 *           A list of reaction nodes that will be requested and directly
 		 */
 		private void requestAndProcessPackageSeparately(ArrayList<Node> reactionPackage) {
 			for (Node reactionNode : reactionPackage) {
@@ -665,7 +673,7 @@ public class WholecellTools {
 				} else {
 					severalIDs.add(kegg_rid);
 				}
-
+				
 				for (String singleKeggRid : severalIDs) {
 					String response = (String) restService.makeRequest("rn:" + singleKeggRid, MediaType.TEXT_PLAIN_TYPE,
 							String.class);
@@ -673,7 +681,7 @@ public class WholecellTools {
 				}
 			}
 		}
-
+		
 		/**
 		 * This method processes a single node, meaning that the given request result is
 		 * nterpreted in the context of the given reaction node and the respective
@@ -691,7 +699,7 @@ public class WholecellTools {
 			}
 			if (requestResult != null) {
 				String[] arrLines = requestResult.split("\n");
-
+				
 				int lineIndex = 0;
 				while (lineIndex < arrLines.length) {
 					if (arrLines[lineIndex].startsWith("PATHWAY"))
@@ -709,48 +717,46 @@ public class WholecellTools {
 						lineIndex++;
 					}
 				}
-
+				
 			}
 			if (subsystemIndex > 0) {
 				reactionsWithKeggSubsystem.add(reactionNode);
 			}
 		}
-
+		
 	}
-
+	
 	/**
 	 * Deriving the initial subsystems from the requested KEGG pathway information.
 	 * This means that for those reactions that have set the attribute
 	 * "SUBSYSTEM_KEGG_k" fore some k, we set the attribute "SUBSYSTEM_DEFINITE" to
 	 * one of these values.
-	 * 
 	 * As we currently want a reaction to be only part of exactly one module, this
 	 * method also applies some heuristics that choose a pathway for the each
 	 * reaction in the case that the KEGG request retrieved more than one viable
 	 * pathways for that particular reaction.
 	 */
 	private static void decompKeggAnn() {
-
+		
 		Map<Node, String> node2finalSubsystem = new KeggDecompUtils().run();
-
+		
 		for (Node reactionNode : node2finalSubsystem.keySet()) {
 			AttributeHelper.setAttribute(reactionNode, WholecellConstants.NOTES,
 					WholecellConstants.SUBSYSTEM + "_DEFINITE", node2finalSubsystem.get(reactionNode));
 		}
-
+		
 	}
-
+	
 	/**
 	 * This class provides some utilities that are used for the
 	 * {@link decompKeggAnn} method.
-	 *
 	 */
 	private static class KeggDecompUtils {
-
+		
 		private Map<Node, ArrayList<String>> node2possibleSubsystems = new HashMap<>();
 		private Map<Node, String> node2finalSubsystem = new HashMap<>();
 		private Map<String, Integer> subsystem2number = new HashMap<>();
-
+		
 		/**
 		 * This method runs the overall KEGG decomposition.
 		 * 
@@ -758,7 +764,7 @@ public class WholecellTools {
 		 *         assigned subsystem.
 		 */
 		public Map<Node, String> run() {
-
+			
 			for (Node reactionNode : reactionsWithKeggSubsystem) {
 				ArrayList<String> subsystems = new ArrayList<>();
 				int subsystemIndex = 0;
@@ -770,20 +776,20 @@ public class WholecellTools {
 				}
 				node2possibleSubsystems.put(reactionNode, subsystems);
 			}
-
+			
 			while (!node2possibleSubsystems.isEmpty()) {
 				updateSubsystemNumber();
 				removeTooSmallSubsystems();
 				removeNodesWithoutSubsystem();
 				extractNodesFromHugestSubsystem();
 			}
-
+			
 			System.out.println("Finished Kegg stuff.");
-
+			
 			return node2finalSubsystem;
-
+			
 		}
-
+		
 		/**
 		 * This method counts for every subsystem the possible occurences over all
 		 * reactions what directly relates to the number of reactions they would be made
@@ -801,7 +807,7 @@ public class WholecellTools {
 				}
 			}
 		}
-
+		
 		/**
 		 * This method removes subsystems that have too few occurences, meaning that
 		 * they would be made up of too few reactions.
@@ -820,13 +826,13 @@ public class WholecellTools {
 				subsystem2number.remove(subsystem);
 			}
 		}
-
+		
 		/**
 		 * This method removes reactions that don't have possible subsystems assigned
 		 * (this could happen e.g. during the {@link removeTooSmallSubsystems} method.
 		 */
 		private void removeNodesWithoutSubsystem() {
-
+			
 			ArrayList<Node> nodesToRemove = new ArrayList<>();
 			for (Node reactionNode : node2possibleSubsystems.keySet()) {
 				if (node2possibleSubsystems.get(reactionNode).isEmpty()) {
@@ -836,19 +842,19 @@ public class WholecellTools {
 			for (Node nodeToRemove : nodesToRemove) {
 				node2possibleSubsystems.remove(nodeToRemove);
 			}
-
+			
 		}
-
+		
 		/**
 		 * This emthod then takes the currently hugest subsystem that has not been
 		 * definitely assigned and assigns it to the corresponding reaction nodes.
 		 */
 		private void extractNodesFromHugestSubsystem() {
-
+			
 			if (subsystem2number.isEmpty()) {
 				return;
 			}
-
+			
 			int currentMax = 0;
 			String hugestSubsystem = "";
 			for (String subsystem : subsystem2number.keySet()) {
@@ -857,7 +863,7 @@ public class WholecellTools {
 					hugestSubsystem = subsystem;
 				}
 			}
-
+			
 			ArrayList<Node> nodesToRemove = new ArrayList<>();
 			for (Node reactionNode : node2possibleSubsystems.keySet()) {
 				if (node2possibleSubsystems.get(reactionNode).contains(hugestSubsystem)) {
@@ -866,15 +872,15 @@ public class WholecellTools {
 				}
 			}
 			myTab.logMsg("Added " + nodesToRemove.size() + " nodes to subsystem " + hugestSubsystem);
-
+			
 			for (Node nodeToRemove : nodesToRemove) {
 				node2possibleSubsystems.remove(nodeToRemove);
 			}
-
+			
 		}
-
+		
 	}
-
+	
 	/**
 	 * Deriving the initial subsystems from the "SUBSYSTEM" annotation of the
 	 * SBML-file. This means that for those reactions that have set the attribute
@@ -882,9 +888,9 @@ public class WholecellTools {
 	 * value.
 	 */
 	private static void decompSubsAnn() {
-
+		
 		HashMap<String, Integer> subsystemCount = new HashMap<>();
-
+		
 		for (Node reactionNode : reactionsFromInitialGraph) {
 			if (AttributeHelper.hasAttribute(reactionNode, WholecellConstants.NOTES,
 					WholecellConstants.SUBSYSTEM + "_ANNOTATED")) {
@@ -899,13 +905,13 @@ public class WholecellTools {
 				}
 			}
 		}
-
+		
 		for (String subsystem : subsystemCount.keySet()) {
 			myTab.logMsg("Added " + subsystemCount.get(subsystem) + " nodes to subsystem " + subsystem + ".");
 		}
-
+		
 	}
-
+	
 	/**
 	 * This method extends the derived decomposition by another subsystem that
 	 * contains transporter reactions. For this purpose, for each reaction we check
@@ -943,7 +949,7 @@ public class WholecellTools {
 		myTab.logMsg(
 				"Added " + numOfTransporters + " nodes to subsystem " + WholecellConstants.TRANSPORTER_SUBSYSTEM + ".");
 	}
-
+	
 	/**
 	 * This method finally completes the subsystem decomposition by assigning any
 	 * unassigned reaction to the subsystem
@@ -961,24 +967,23 @@ public class WholecellTools {
 		}
 		myTab.logMsg("Added " + numOfDefaults + " nodes to subsystem " + WholecellConstants.DEFAULT_SUBSYSTEM + ".");
 	}
-
+	
 	/**
 	 * This helper class contains all utilities to finally constuct and show the
 	 * overview graph.
 	 * 
 	 * @author Michael
-	 *
 	 */
 	private static class OverviewGraphUtils {
-
+		
 		private HashMap<String, HashMap<String, ArrayList<String>>> subsystemRelationships;
-
+		
 		/**
 		 * This method runs the overall overview graph construction and presentation.
 		 * 
 		 * @param layoutAlgorithm
-		 *            A string refering to the layout algorithm that shall be used to
-		 *            layout the constructed overview graph.
+		 *           A string refering to the layout algorithm that shall be used to
+		 *           layout the constructed overview graph.
 		 */
 		public void run(String layoutAlgorithm) {
 			// determineInterfaceMetabolites();
@@ -987,21 +992,21 @@ public class WholecellTools {
 			createSubsystemGraphs();
 			showOverviewGraph(layoutAlgorithm);
 		}
-
+		
 		/**
 		 * This method determines which subsystems are related to each other by
 		 * detection of metabolites between them.
 		 */
 		private void determineSubsystemRelationships() {
-
+			
 			subsystemRelationships = new HashMap<>();
-
+			
 			// Grab subsystems
 			for (Node reactionNode : reactionsFromInitialGraph) {
 				String subsystemName = getSubsystem(reactionNode);
 				subsystems.add(subsystemName);
 			}
-
+			
 			// Initialise HashMap(s)
 			for (String subsystem1 : subsystems) {
 				HashMap<String, ArrayList<String>> hmap = new HashMap<>();
@@ -1013,7 +1018,7 @@ public class WholecellTools {
 				}
 				subsystemRelationships.put(subsystem1, hmap);
 			}
-
+			
 			for (Node speciesNode : speciesFromInitialGraph) {
 				Set<Node> inneighbors = speciesNode.getInNeighbors();
 				Set<Node> outneighbors = speciesNode.getOutNeighbors();
@@ -1035,21 +1040,20 @@ public class WholecellTools {
 				}
 			}
 		}
-
+		
 		/**
 		 * This method creates the overview graph by constructing it according to the
 		 * classified subsystems and the determined interface metabolites. For each of
 		 * the subsystems, a new subsystem node is created and finally the interface
 		 * metabolite nodes and the subsystem nodes are joined together via
 		 * corresponding edges.
-		 * 
 		 * During this step, {@link subsystemNodes} and {@link subsystemNameMap} are
 		 * instantiated.
 		 */
 		private void createOverviewGraph() {
-
+			
 			overviewGraph = new AdjListGraph();
-
+			
 			for (String subsystem1 : subsystemRelationships.keySet()) {
 				for (String subsystem2 : subsystemRelationships.get(subsystem1).keySet()) {
 					if (!subsystemRelationships.get(subsystem1).get(subsystem2).isEmpty()) {
@@ -1060,23 +1064,23 @@ public class WholecellTools {
 					}
 				}
 			}
-
+			
 			myTab.setLabelGeneralInfoSubs(String.valueOf(subsystemNameMap.keySet().size()));
-
+			
 		}
-
+		
 		/**
 		 * This method checks whether there is already a node in the overview graph with
 		 * the specified label. If so, the respective node is returned. Otherwise, a new
 		 * node is created and then returned.
 		 * 
 		 * @param subsystem
-		 *            the label of the node that is to be returned or created,
-		 *            respectively.
+		 *           the label of the node that is to be returned or created,
+		 *           respectively.
 		 * @return the node with the specified label.
 		 */
 		private Node getOrCreateSubsystemNode(String subsystem) {
-
+			
 			Node subsystemNode = null;
 			for (Node node : overviewGraph.getNodes()) {
 				if (AttributeHelper.getLabel(node, "").equals(subsystem)) {
@@ -1084,23 +1088,23 @@ public class WholecellTools {
 					break;
 				}
 			}
-
+			
 			if (subsystemNode == null) {
 				Random random = new Random();
 				subsystemNode = overviewGraph.addNode(
 						AttributeHelper.getDefaultGraphicsAttributeForNode(random.nextInt(1000), random.nextInt(1000)));
 				AttributeHelper.setLabel(subsystemNode, subsystem);
 				AttributeHelper.setSize(subsystemNode, 100, 100);
-
+				
 				// Storing the created subsystem node to the subsystemNodeMap.
 				subsystemNameMap.put(subsystem, subsystemNode);
 				subsystemNodes.add(subsystemNode);
 			}
-
+			
 			return subsystemNode;
-
+			
 		}
-
+		
 		/**
 		 * This method constructs the subsystem graphs depending on the subsystems
 		 * contained in the {@link subsystemNameMap} map that has been set before.
@@ -1108,15 +1112,15 @@ public class WholecellTools {
 		 * map.
 		 */
 		private void createSubsystemGraphs() {
-
+			
 			HashSet<Node> nodes;
 			HashSet<Edge> edges;
 			Graph subsystemGraph;
-
+			
 			for (String subsystem : subsystemNameMap.keySet()) {
 				nodes = new HashSet<>();
 				edges = new HashSet<>();
-
+				
 				for (Node reactionNode : reactionsFromInitialGraph) {
 					if (subsystem.equals(getSubsystem(reactionNode))) {
 						nodes.add(reactionNode);
@@ -1124,7 +1128,7 @@ public class WholecellTools {
 						nodes.addAll(reactionNode.getNeighbors());
 					}
 				}
-
+				
 				subsystemGraph = new AdjListGraph((CollectionAttribute) initialGraph.getAttributes().copy());
 				Map<Node, Node> nodes2newNodes = new HashMap<>();
 				for (Node node : nodes) {
@@ -1139,56 +1143,56 @@ public class WholecellTools {
 				subsystemGraph.setName(subsystem);
 				subsystemGraphMap.put(subsystemNameMap.get(subsystem), subsystemGraph);
 			}
-
+			
 		}
-
+		
 		/**
 		 * This method finally creates a new viewer that shows the previously
 		 * constructed overview graph.
 		 */
 		private void showOverviewGraph(String layoutAlgorithm) {
-
+			
 			MainFrame.getInstance().showGraph(overviewGraph, null, LoadSetting.VIEW_CHOOSER_NEVER);
 			switch (layoutAlgorithm) {
-			case WholecellConstants.LAYOUT_FORCEDIR:
-				layOutForceDir();
-				break;
-			case WholecellConstants.LAYOUT_CIRCULAR:
-				double circumference = 120.0 * subsystems.size();
-				layOutCircular(Math.round(circumference / (2.0 * Math.PI)));
-				break;
-			default:
-				break;
+				case WholecellConstants.LAYOUT_FORCEDIR:
+					layOutForceDir();
+					break;
+				case WholecellConstants.LAYOUT_CIRCULAR:
+					double circumference = 120.0 * subsystems.size();
+					layOutCircular(Math.round(circumference / (2.0 * Math.PI)));
+					break;
+				default:
+					break;
 			}
-
+			
 		}
-
+		
 		/**
 		 * Helper method that returns the subsystem String of a given node.
 		 * 
 		 * @param node
-		 *            The node that we want the subsystem from.
+		 *           The node that we want the subsystem from.
 		 * @return The subsystem String that has been assigned to this node.
 		 */
 		private String getSubsystem(Node node) {
 			return (String) AttributeHelper.getAttributeValue(node, WholecellConstants.NOTES,
 					WholecellConstants.SUBSYSTEM + "_DEFINITE", "", "");
 		}
-
+		
 	}
-
+	
 	/**
 	 * Shows the subsystem graph for all subsystem nodes contained in the given
 	 * list. Nodes that may be contained in that list but are no subsystem nodes
 	 * themselves are simply ignored.
 	 * 
 	 * @param node
-	 *            The node for which the subsystem graph is to be shown.
+	 *           The node for which the subsystem graph is to be shown.
 	 */
 	private static void showSubsystemGraphOf(Collection<Node> subsystemNodes) {
-
+		
 		// if more than one node selected?! ...
-
+		
 		for (Node node : subsystemNodes) {
 			String label = AttributeHelper.getLabel(node, "");
 			if (subsystemNameMap.containsKey(label)) {
@@ -1196,30 +1200,30 @@ public class WholecellTools {
 				MainFrame.getInstance().showGraph(subsystemGraph, null, LoadSetting.VIEW_CHOOSER_NEVER);
 				String layoutAlgo = myTab.getLayoutAlgorithmSubsystemGraph();
 				switch (layoutAlgo) {
-				case WholecellConstants.LAYOUT_FORCEDIR:
-					layOutForceDir();
-					break;
-				case WholecellConstants.LAYOUT_CONCENTRIC_CIRC:
-					layOutConcentricCirc();
-					break;
-				case WholecellConstants.LAYOUT_PARALLEL_LINES:
-					layOutParallelLines();
-					break;
+					case WholecellConstants.LAYOUT_FORCEDIR:
+						layOutForceDir();
+						break;
+					case WholecellConstants.LAYOUT_CONCENTRIC_CIRC:
+						layOutConcentricCirc();
+						break;
+					case WholecellConstants.LAYOUT_PARALLEL_LINES:
+						layOutParallelLines();
+						break;
 				}
-
+				
 			}
 		}
-
+		
 	}
-
+	
 	/**
 	 * This method applies a force-directed layout to the currently active editor
 	 * session.
 	 */
 	private static void layOutForceDir() {
-
+		
 		Graph graph = MainFrame.getInstance().getActiveEditorSession().getGraph();
-
+		
 		ThreadSafeOptions threadSafeOptions = MyNonInteractiveSpringEmb.getNewThreadSafeOptionsWithDefaultSettings();
 		threadSafeOptions.doFinishMoveToTop = true;
 		threadSafeOptions.doFinishRemoveOverlapp = true;
@@ -1239,9 +1243,9 @@ public class WholecellTools {
 		// run in background task
 		BackgroundTaskHelper.issueSimpleTask("LayoutModel", "", nonInteractiveSpringEmbedder, null,
 				nonInteractiveSpringEmbedder);
-
+		
 	}
-
+	
 	/**
 	 * This method applies a circular layout to the currently active editor session.
 	 */
@@ -1252,7 +1256,7 @@ public class WholecellTools {
 		cl.attach(graph, selection);
 		cl.execute();
 	}
-
+	
 	/**
 	 * This method produces a layout of the graph that consists of two concentric
 	 * circles. The outer circle consists of the species whereas the inner circle is
@@ -1260,44 +1264,43 @@ public class WholecellTools {
 	 * minimisation is applied.
 	 */
 	private static void layOutConcentricCirc() {
-
+		
 		ArrayList<Node> species = new ArrayList<>();
 		ArrayList<Node> reactions = new ArrayList<>();
 		Graph graph = MainFrame.getInstance().getActiveEditorSession().getGraph();
 		for (Node node : graph.getNodes()) {
 			if (isSpecies(node)) {
 				species.add(node);
-			} else if (isReaction(node)) {
-				reactions.add(node);
-			}
+			} else
+				if (isReaction(node)) {
+					reactions.add(node);
+				}
 		}
-
+		
 		crossingMin(species, reactions);
-
+		
 		double circumference = Math.max(30 * species.size(), 30 * reactions.size());
 		int minRad = (int) Math.round(circumference / (2 * Math.PI));
 		int maxRad = 2 * minRad;
 		int center = maxRad + 100;
 		for (int i = 0; i < reactions.size(); i++) {
-
+			
 			int xPos = (int) Math
 					.round(center + minRad * Math.cos((((double) i) / ((double) reactions.size())) * 2 * Math.PI));
 			int yPos = (int) Math
-					.round(center + minRad * Math.sin((((double) i) / ((double) reactions.size())) * 2 * Math.PI));
-			;
+					.round(center + minRad * Math.sin((((double) i) / ((double) reactions.size())) * 2 * Math.PI));;
 			AttributeHelper.setPosition(reactions.get(i), xPos, yPos);
 		}
 		for (int i = 0; i < species.size(); i++) {
-
+			
 			int xPos = (int) Math
 					.round(center + maxRad * Math.cos((((double) i) / ((double) species.size())) * 2 * Math.PI));
 			int yPos = (int) Math
-					.round(center + maxRad * Math.sin((((double) i) / ((double) species.size())) * 2 * Math.PI));
-			;
+					.round(center + maxRad * Math.sin((((double) i) / ((double) species.size())) * 2 * Math.PI));;
 			AttributeHelper.setPosition(species.get(i), xPos, yPos);
 		}
 	}
-
+	
 	/**
 	 * This method produces a layout of the graph that consists of two parallel
 	 * lines. The upper line consists of the species whereas the lower line is made
@@ -1305,46 +1308,47 @@ public class WholecellTools {
 	 * minimisation is applied.
 	 */
 	private static void layOutParallelLines() {
-
+		
 		ArrayList<Node> species = new ArrayList<>();
 		ArrayList<Node> reactions = new ArrayList<>();
 		Graph graph = MainFrame.getInstance().getActiveEditorSession().getGraph();
 		for (Node node : graph.getNodes()) {
 			if (isSpecies(node)) {
 				species.add(node);
-			} else if (isReaction(node)) {
-				reactions.add(node);
-			}
+			} else
+				if (isReaction(node)) {
+					reactions.add(node);
+				}
 		}
-
+		
 		crossingMin(species, reactions);
-
+		
 		int xSpan = Math.max(60 * species.size(), 60 * reactions.size());
-
+		
 		int xPos = 0;
 		int xStep = xSpan / species.size();
 		for (int i = 0; i < species.size(); i++) {
 			AttributeHelper.setPosition(species.get(i), xPos, 100);
 			xPos += xStep;
 		}
-
+		
 		xPos = 0;
 		xStep = xSpan / reactions.size();
 		for (int i = 0; i < reactions.size(); i++) {
 			AttributeHelper.setPosition(reactions.get(i), xPos, 700);
 			xPos += xStep;
 		}
-
+		
 	}
-
+	
 	/**
 	 * This method applies the barycenter heuristic for two layer crossing
 	 * minimisation, choosing the best result out of five.
 	 * 
 	 * @param layer1
-	 *            First layer.
+	 *           First layer.
 	 * @param layer2
-	 *            Second layer.
+	 *           Second layer.
 	 */
 	private static void crossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2) {
 		ArrayList<Node> currentMinL1;
@@ -1374,17 +1378,17 @@ public class WholecellTools {
 			layer2.set(i, workCopyL2.get(i));
 		}
 	}
-
+	
 	/**
 	 * This is a helper function for the crossing minimisation. It calculates the
 	 * barycenters of the nodes and sorts the layers according to their barycenters.
 	 * 
 	 * @param layer1
-	 *            First layer.
+	 *           First layer.
 	 * @param layer2
-	 *            Second layer.
+	 *           Second layer.
 	 * @param numberOfCrossings
-	 *            The current best result.
+	 *           The current best result.
 	 */
 	private static void crossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2, int numberOfCrossings) {
 		Map<Node, Double> node2barycenter = new HashMap<>();
@@ -1407,14 +1411,14 @@ public class WholecellTools {
 			crossingMin(layer2, layer1, newNumberOfCrossings);
 		}
 	}
-
+	
 	/**
 	 * This method counts the number of crossings that occur between the two layers.
 	 * 
 	 * @param layer1
-	 *            First layer.
+	 *           First layer.
 	 * @param layer2
-	 *            Second layer.
+	 *           Second layer.
 	 * @return The number of crossings between the two layers.
 	 */
 	private static int numberOfCrossings(ArrayList<Node> layer1, ArrayList<Node> layer2) {
@@ -1434,15 +1438,15 @@ public class WholecellTools {
 		}
 		return res;
 	}
-
+	
 	/**
 	 * This method computes for the given node the barycenter of the index positions
 	 * of all its neighbors in the given neighbor array.
 	 * 
 	 * @param node
-	 *            The node for which the barycenter is to be computed.
+	 *           The node for which the barycenter is to be computed.
 	 * @param neighborList
-	 *            The list in which the neighbors are contained.
+	 *           The list in which the neighbors are contained.
 	 * @return The barycenter of the index positions of the nodes neighbors.
 	 */
 	private static double getBarycenter(Node node, ArrayList<Node> neighborList) {
@@ -1453,44 +1457,44 @@ public class WholecellTools {
 		res /= ((double) node.getNeighbors().size());
 		return res;
 	}
-
+	
 	/**
 	 * Check whether a certain node is a reaction node.
 	 * 
 	 * @param node
-	 *            The node to be checked
+	 *           The node to be checked
 	 * @return whether the given node is a reaction node
 	 */
 	private static boolean isReaction(Node node) {
-
+		
 		return isRole(node, SBML_Constants.ROLE_REACTION);
-
+		
 	}
-
+	
 	/**
 	 * Check whether a certain node is a species node.
 	 * 
 	 * @param node
-	 *            The node to be checked
+	 *           The node to be checked
 	 * @return whether the given node is a species node
 	 */
 	private static boolean isSpecies(Node node) {
-
+		
 		return isRole(node, SBML_Constants.ROLE_SPECIES);
-
+		
 	}
-
+	
 	/**
 	 * Check whether a certain node has a given role.
 	 * 
 	 * @param node
-	 *            The node to be checked
+	 *           The node to be checked
 	 * @param role
-	 *            The role for which the role affiliation is to be checked
+	 *           The role for which the role affiliation is to be checked
 	 * @return whether the given node has the specified role
 	 */
 	private static boolean isRole(Node node, String role) {
-
+		
 		if (AttributeHelper.hasAttribute(node, SBML_Constants.SBML, SBML_Constants.SBML_ROLE)) {
 			String sbmlRole = (String) AttributeHelper.getAttributeValue(node, SBML_Constants.SBML,
 					SBML_Constants.SBML_ROLE, "", "");
@@ -1498,7 +1502,121 @@ public class WholecellTools {
 				return true;
 		}
 		return false;
-
+		
 	}
-
+	
+	/**
+	 * This method translates the model to SBGN if the SBGN-ED addon is available.
+	 * TODO: move translation to background thread, runs currently in main thread
+	 * TODO: provide proper error message to user if method is not available because SBGN-ED addon is not available OR deactivate button
+	 * TODO: currently the original graph is translated to SBGN, maybe translate the copy?
+	 * 
+	 * @return An ActionListener that is put on the translate to SBGN button in the extension tab.
+	 */
+	public static ActionListener translateToSBGN() {
+		return new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				
+				try {
+					Class<?> SBMLTranslationMode = Class.forName("org.sbgned.translation.SBMLTranslationMode", true, InstanceLoader.getCurrentLoader());
+					Object[] enumConstants = SBMLTranslationMode.getEnumConstants();
+					Class<?> SBMLTranslation = Class.forName("org.sbgned.translation.SBMLTranslation", true, InstanceLoader.getCurrentLoader());
+					Constructor<?> constructor = SBMLTranslation.getDeclaredConstructor(SBMLTranslationMode);
+					// enumConstants[0] INTERACTIVE, enumConstants[1] NONINTERACTIVE
+					Object instance = constructor.newInstance(enumConstants[1]);
+					
+					// make a copy of the graph before translation to SBGN
+					final Graph graph = MainFrame.getInstance().getActiveEditorSession().getGraph();
+					final Graph newGraph = new AdjListGraph();
+					newGraph.addGraph(graph);
+					
+					// runs as algorithm to get the current graph
+					GravistoService.getInstance().runAlgorithm((Algorithm) instance, null);
+					GraphHelper.issueCompleteRedrawForActiveView();
+					
+					// show copied graph
+					MainFrame.getInstance().showGraph(newGraph, null, LoadSetting.VIEW_CHOOSER_NEVER);
+					SwingUtilities.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							tileView(newGraph, graph);
+						}
+					});
+					
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InstantiationException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+		};
+	}
+	
+	/**
+	 * Tiles the view (currently two internal frames: left internal frame, right internal frame).
+	 * 
+	 * @param gleft
+	 *           The graph in the left internal frame
+	 * @param gright
+	 *           The graph in the right internal frame
+	 */
+	private static void tileView(Graph gleft, Graph gright) {
+		
+		// get all internal frames
+		JInternalFrame[] jinternalFrames = MainFrame.getInstance().getDesktop().getAllFrames();
+		// get view width and height
+		int width = MainFrame.getInstance().getDesktop().getWidth();
+		int height = MainFrame.getInstance().getDesktop().getHeight();
+		// initialise IDs for gleft and gright
+		int idgleft = -1;
+		int idgright = -1;
+		
+		// find the internal frames for the two graphs
+		for (int k = 0; k < jinternalFrames.length; k++)
+			if (jinternalFrames[k] instanceof GraffitiInternalFrame) {
+				GraffitiInternalFrame internalFrame = (GraffitiInternalFrame) jinternalFrames[k];
+				// de-iconify and de-maximise all internal frames
+				// see DesktopMenuManager.restoreFrames
+				try {
+					internalFrame.setMaximum(false);
+					internalFrame.setIcon(false);
+				} catch (PropertyVetoException e) {
+					// should not happen
+					e.printStackTrace();
+					assert false;
+				}
+				if (internalFrame.getView().getGraph() == gleft) {
+					idgleft = k;
+				} else
+					if (internalFrame.getView().getGraph() == gright) {
+						idgright = k;
+					}
+			}
+		// resize and reposition the internal frames
+		if (idgleft != -1 && idgright != -1) {
+			int halfwidth = (int) Math.round(width / 2.0);
+			jinternalFrames[idgleft].setBounds(0, 0, halfwidth, height);
+			jinternalFrames[idgright].setBounds(width - halfwidth, 0, width - halfwidth, height);
+		}
+		
+	}
+	
 }
