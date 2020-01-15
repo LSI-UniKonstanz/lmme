@@ -25,7 +25,7 @@ import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
 
 public class SchusterGsmmDecomposition extends GsmmDecompositionAlgorithm {
 
-	private int defaultThreshold = 4;
+	private int defaultThreshold = 8;
 
 	private JTextField tfThreshold;
 
@@ -92,7 +92,7 @@ public class SchusterGsmmDecomposition extends GsmmDecompositionAlgorithm {
 	 * 
 	 */
 	public boolean requiresCloning() {
-		return false;
+		return true;
 	}
 
 	/**
@@ -103,7 +103,7 @@ public class SchusterGsmmDecomposition extends GsmmDecompositionAlgorithm {
 
 		JLabel lblThreshold = new JLabel("Metabolite degree threshold: ");
 		this.tfThreshold = new JTextField(5);
-		this.tfThreshold.setText("4");
+		this.tfThreshold.setText(Integer.toString(this.defaultThreshold));
 
 		JPanel thresholdLine = GsmmExplorerTab.combine(lblThreshold, this.tfThreshold, Color.WHITE, false, true);
 		fp.addGuiComponentRow(thresholdLine, null, true);
