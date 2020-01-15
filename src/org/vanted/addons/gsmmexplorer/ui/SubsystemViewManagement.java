@@ -6,6 +6,7 @@ package org.vanted.addons.gsmmexplorer.ui;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.AttributeHelper;
 import org.graffiti.attributes.CollectionAttribute;
@@ -28,8 +29,6 @@ import org.vanted.addons.gsmmexplorer.graphs.SubsystemGraph;
  *
  */
 public class SubsystemViewManagement {
-	
-	
 
 	private static SubsystemViewManagement instance;
 
@@ -68,7 +67,7 @@ public class SubsystemViewManagement {
 		} else {
 			addSubsystems(subsystems, useColor);
 		}
-		
+
 		int species = 0;
 		int reactions = 0;
 		for (SubsystemGraph subsystem : currentSubSystems) {
@@ -139,9 +138,12 @@ public class SubsystemViewManagement {
 
 		BaseGraph baseGraph = GsmmExplorerController.getInstance().getCurrentSession().getBaseGraph();
 
-		Graph consolidatedSubsystemGraph = new AdjListGraph((CollectionAttribute) baseGraph.getOriginalGraph().getAttributes().copy());
+		Graph consolidatedSubsystemGraph = new AdjListGraph(
+				(CollectionAttribute) baseGraph.getOriginalGraph().getAttributes().copy());
 
 		HashMap<Node, Node> nodes2newNodes = new HashMap<>();
+		HashSet<Edge> addedEdges = new HashSet<>();
+		HashSet<Node> processedInterfaces = new HashSet<>();
 
 		for (SubsystemGraph subsystem : currentSubSystems) {
 			if (useColor) {
@@ -171,6 +173,7 @@ public class SubsystemViewManagement {
 				Node sourceNode = nodes2newNodes.get(edge.getSource());
 				Node targetNode = nodes2newNodes.get(edge.getTarget());
 				consolidatedSubsystemGraph.addEdgeCopy(edge, sourceNode, targetNode);
+				addedEdges.add(edge);
 			}
 		}
 
@@ -181,23 +184,29 @@ public class SubsystemViewManagement {
 					ArrayList<Node> interfaces = GsmmExplorerController.getInstance().getCurrentSession()
 							.getOverviewGraph().getInterfaceNodes(sourceSystem, targetSystem);
 					for (Node interfaceNode : interfaces) {
-						if (!nodes2newNodes.keySet().contains(interfaceNode)) {
-							Node newNode = consolidatedSubsystemGraph.addNodeCopy(interfaceNode);
-							nodes2newNodes.put(interfaceNode, newNode);
-						}
-						for (Edge inEdge : interfaceNode.getAllInEdges()) {
-							if (nodes2newNodes.keySet().contains(inEdge.getSource())) {
-								consolidatedSubsystemGraph.addEdgeCopy(inEdge, nodes2newNodes.get(inEdge.getSource()),
-										nodes2newNodes.get(interfaceNode));
+						if (!processedInterfaces.contains(interfaceNode)) {
+							processedInterfaces.add(interfaceNode);
+							if (!nodes2newNodes.keySet().contains(interfaceNode)) {
+								Node newNode = consolidatedSubsystemGraph.addNodeCopy(interfaceNode);
+								nodes2newNodes.put(interfaceNode, newNode);
+							}
+							for (Edge inEdge : interfaceNode.getAllInEdges()) {
+								if (nodes2newNodes.keySet().contains(inEdge.getSource())
+										&& !addedEdges.contains(inEdge)) {
+									addedEdges.add(inEdge);
+									consolidatedSubsystemGraph.addEdgeCopy(inEdge,
+											nodes2newNodes.get(inEdge.getSource()), nodes2newNodes.get(interfaceNode));
+								}
+							}
+							for (Edge outEdge : interfaceNode.getAllOutEdges()) {
+								if (nodes2newNodes.keySet().contains(outEdge.getTarget())
+										&& !addedEdges.contains(outEdge)) {
+									addedEdges.add(outEdge);
+									consolidatedSubsystemGraph.addEdgeCopy(outEdge, nodes2newNodes.get(interfaceNode),
+											nodes2newNodes.get(outEdge.getTarget()));
+								}
 							}
 						}
-						for (Edge outEdge : interfaceNode.getAllOutEdges()) {
-							if (nodes2newNodes.keySet().contains(outEdge.getTarget())) {
-								consolidatedSubsystemGraph.addEdgeCopy(outEdge, nodes2newNodes.get(interfaceNode),
-										nodes2newNodes.get(outEdge.getTarget()));
-							}
-						}
-
 					}
 
 				}
@@ -206,7 +215,7 @@ public class SubsystemViewManagement {
 
 		GsmmExplorerViewManagement.getInstance().showAsSubsystemGraph(consolidatedSubsystemGraph);
 	}
-	
+
 	public void resetLists() {
 		this.colorMap.clear();
 		this.currentSubSystems.clear();
