@@ -52,6 +52,7 @@ public class GsmmExplorerViewManagement {
 	
 	public void showAsOverviewGraph(Graph graph) {
 		ensureClosed(overviewFrame);
+		ensureClosed(subsystemFrame);
 		overviewFrame = show(graph);
 		reArrangeFrames();
 	}
@@ -66,6 +67,7 @@ public class GsmmExplorerViewManagement {
 		if (frame != null) {
 			if (!frame.isClosed()) {
 				try {
+					frame.getView().getGraph().setModified(false);
 					frame.setClosed(true);
 				} catch (PropertyVetoException e) {
 					e.printStackTrace();

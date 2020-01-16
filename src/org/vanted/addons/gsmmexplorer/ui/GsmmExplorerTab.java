@@ -81,6 +81,7 @@ public class GsmmExplorerTab extends InspectorTab {
 	private JCheckBox ckbClearSubsView;
 	private JCheckBox ckbUseColorMapping;
 
+	private final int defaultSplitDeg = 15;
 	private JSlider sliderSplitDeg;
 	private JLabel labelSliderCorrespSpeciesNumber;
 
@@ -362,7 +363,7 @@ public class GsmmExplorerTab extends InspectorTab {
 			}
 		});
 
-		sliderSplitDeg.setValue(sliderSplitDeg.getMinimum());
+		sliderSplitDeg.setValue(this.defaultSplitDeg);
 
 		JComponent splitDegSetting = TableLayout
 				.getDoubleRow(combine(combine(labelSliderSplitDeg, labelSliderSplitDegCurr, Color.WHITE, false, false),
