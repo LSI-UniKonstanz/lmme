@@ -4,10 +4,12 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
@@ -47,7 +49,7 @@ public class KeggGsmmDecomposition extends GsmmDecompositionAlgorithm { //implem
 	/**
 	 * The rest service for the KEGG requests.
 	 */
-	private static RestService restService = new RestService("http://rest.kegg.jp/get/");
+	private RestService restService = new RestService("http://rest.kegg.jp/get/");
 
 	private HashMap<Node, ArrayList<String>> node2possibleSubsystems;
 	private HashMap<String, Integer> subsystem2number;
@@ -155,8 +157,11 @@ public class KeggGsmmDecomposition extends GsmmDecompositionAlgorithm { //implem
 		}
 		urlPostFix = urlPostFix.substring(1);
 		String response = (String) this.restService.makeRequest(urlPostFix, MediaType.TEXT_PLAIN_TYPE, String.class);
+		if ((response == null)) {
+			return new String[0];
+		}
 		response = response.substring(0, response.length() - 3);
-		return response.split(GsmmExplorerConstants.KEGGSEP);
+		return response.split(Pattern.quote(GsmmExplorerConstants.KEGGSEP));
 	}
 
 	/**
@@ -196,7 +201,7 @@ public class KeggGsmmDecomposition extends GsmmDecompositionAlgorithm { //implem
 					ATTRIBUTE_NAME_KEGG_ID);
 			ArrayList<String> severalIDs = new ArrayList<>();
 			if (keggId.contains(this.separator.getText().trim())) {
-				String[] splitted = keggId.split(this.separator.getText().trim());
+				String[] splitted = keggId.split(Pattern.quote(this.separator.getText().trim()));
 				for (int i = 0; i < splitted.length; i++) {
 					severalIDs.add(splitted[i].trim());
 				}

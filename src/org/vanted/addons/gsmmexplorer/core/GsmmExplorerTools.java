@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.JOptionPane;
+
 import org.AttributeHelper;
 import org.graffiti.editor.MainFrame;
 import org.graffiti.graph.AdjListGraph;
@@ -103,7 +105,12 @@ public class GsmmExplorerTools {
 					foundNotes |= readNote(node, notes, noteName, attributeName);
 				}
 			}
-			baseGraph.getNotes().add(noteName);
+			if (foundNotes) {
+				baseGraph.getNotes().add(noteName);
+			} else {
+				JOptionPane.showMessageDialog(null, "<html> Could not find a note with the tag <b>" + noteName
+						+ "</b> in the SBML file. <br> The decomposition will thus not depend on these notes.</html>");
+			}
 			return foundNotes;
 		} else {
 			return true;

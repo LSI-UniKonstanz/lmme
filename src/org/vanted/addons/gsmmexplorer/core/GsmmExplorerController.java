@@ -167,7 +167,7 @@ public class GsmmExplorerController {
 				// 0=Yes, 1=No, -1=window closed
 				int option = JOptionPane.showConfirmDialog(null,
 						"<html>The overview graph has already been constructed. Constructing a new one will start a new session <br>"
-								+ "where the base graph is kept wile the remaining data from the current session is deleted. Do you want to continue?</html>",
+								+ "where the base graph is kept while the remaining data from the current session is deleted. Do you want to continue?</html>",
 						"Warning: Overview graph already constructed", JOptionPane.YES_NO_OPTION);
 				if ((option == 1) || (option == -1)) {
 					return;
@@ -252,6 +252,7 @@ public class GsmmExplorerController {
 
 	private void resetSession() {
 		currentSession = new GsmmExplorerSession();
+		this.tab.resetLblNumberOfSubsystems();
 	}
 
 	private void partiallyResetSession() {

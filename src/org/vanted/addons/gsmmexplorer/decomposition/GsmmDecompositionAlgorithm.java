@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.AttributeHelper;
 import org.FolderPanel;
@@ -215,7 +216,7 @@ public abstract class GsmmDecompositionAlgorithm {
 		for (Node reactionNode : baseGraph.getReactionNodes()) {
 			String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
 			if (subsystemName != "") {
-				String[] subsystemNames = subsystemName.split(separator);
+				String[] subsystemNames = subsystemName.split(Pattern.quote(separator));
 				allSubsystemNames.addAll(Arrays.asList(subsystemNames));
 			}
 		}
@@ -230,7 +231,7 @@ public abstract class GsmmDecompositionAlgorithm {
 		for (Node reactionNode : baseGraph.getReactionNodes()) {
 			String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
 			if (subsystemName != "") {
-				String[] subsystemNames = subsystemName.split(separator);
+				String[] subsystemNames = subsystemName.split(Pattern.quote(separator));
 				for (String currentSubsystemName : subsystemNames) {
 					subsystemMap.get(currentSubsystemName).addReaction(reactionNode);
 					for (Edge incidentEdge : reactionNode.getEdges()) {
