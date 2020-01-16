@@ -57,17 +57,21 @@ public abstract class GsmmDecompositionAlgorithm {
 		if (addDefaultSubsystem) {
 			SubsystemGraph defaultSubsystem = this.determineDefaultSubsystem(decomposition);
 
-			if (splitDefaultSubsystem) {
-				ArrayList<SubsystemGraph> subsystems = this.splitDefaultSubsystem(decomposition, defaultSubsystem,
-						minimumSubsystemSize);
-				for (SubsystemGraph subsystem : subsystems) {
-					decomposition.addSubsystem(subsystem);
+			if (defaultSubsystem != null) {
+				if (splitDefaultSubsystem) {
+					ArrayList<SubsystemGraph> subsystems = this.splitDefaultSubsystem(decomposition, defaultSubsystem,
+							minimumSubsystemSize);
+					for (SubsystemGraph subsystem : subsystems) {
+						decomposition.addSubsystem(subsystem);
+					}
+					SubsystemGraph remainingDefaultSubsystem = determineDefaultSubsystem(decomposition);
+					if (remainingDefaultSubsystem != null) {
+						remainingDefaultSubsystem.setName("Default Subsystem 0");
+						decomposition.addSubsystem(remainingDefaultSubsystem);
+					}
+				} else {
+					decomposition.addSubsystem(defaultSubsystem);
 				}
-				SubsystemGraph remainingDefaultSubsystem = determineDefaultSubsystem(decomposition);
-				remainingDefaultSubsystem.setName("Default Subsystem 0");
-				decomposition.addSubsystem(remainingDefaultSubsystem);
-			} else {
-				decomposition.addSubsystem(defaultSubsystem);
 			}
 		}
 
@@ -141,8 +145,11 @@ public abstract class GsmmDecompositionAlgorithm {
 				reactionNodes.add(reactionNode);
 			}
 		}
-
-		return new SubsystemGraph(GsmmExplorerConstants.DEFAULT_SUBSYSTEM, speciesNodes, reactionNodes, edges);
+		if (reactionNodes.isEmpty()) {
+			return null;
+		} else {
+			return new SubsystemGraph(GsmmExplorerConstants.DEFAULT_SUBSYSTEM, speciesNodes, reactionNodes, edges);
+		}
 	}
 
 	private ArrayList<SubsystemGraph> splitDefaultSubsystem(GsmmDecomposition decomposition,
