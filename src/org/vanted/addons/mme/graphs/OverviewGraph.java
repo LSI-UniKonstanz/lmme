@@ -84,7 +84,10 @@ public class OverviewGraph {
 					Node targetNode = subsystemToNodeMap.get(subsystem2);
 					Edge addedEdge = graph.addEdge(sourceNode, targetNode, false,
 							AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
-					AttributeHelper.setFrameThickNess(addedEdge, totalInterfaces > 20 ? 20.0 : (double) totalInterfaces);
+					if (MMEController.getInstance().getTab().getMapToEdgeThickness()) {
+						AttributeHelper.setFrameThickNess(addedEdge,
+								totalInterfaces > 20 ? 20.0 : (double) totalInterfaces);
+					}
 				}
 			}
 		}

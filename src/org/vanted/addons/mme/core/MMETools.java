@@ -51,37 +51,12 @@ public class MMETools {
 		return MMETools.instance;
 	}
 
-	public void cloneSpecies(List<Node> clonableSpecies, int degreeThreshold) {
-		for (Node nodeToCopy : clonableSpecies) {
-			if (nodeToCopy.getDegree() >= degreeThreshold) {
-				for (Edge edge : nodeToCopy.getEdges()) {
-					Node newNode = nodeToCopy.getGraph().addNodeCopy(nodeToCopy);
-					Node source, target;
-					if (edge.getSource() == nodeToCopy) {
-						source = newNode;
-					} else {
-						source = edge.getSource();
-					}
-					if (edge.getTarget() == nodeToCopy) {
-						target = newNode;
-					} else {
-						target = edge.getTarget();
-					}
-					nodeToCopy.getGraph().addEdgeCopy(edge, source, target);
-				}
-				nodeToCopy.getGraph().deleteNode(nodeToCopy);
-			}
-		}
-
-		MMEController.getInstance().getCurrentSession().getBaseGraph().updateLists();
-	}
-
 	public HashSet<String> findNotes(Graph graph) {
 		HashSet<String> res = new HashSet<>();
 		List<Node> nodes = graph.getNodes();
 		SBMLReactionHelper sbmlReactionHelper = new SBMLReactionHelper(graph);
 		SBMLSpeciesHelper sbmlSpeciesHelper = new SBMLSpeciesHelper(graph);
-		
+
 		for (Node node : nodes) {
 			if (isSpecies(node)) {
 				XMLNode notes = sbmlSpeciesHelper.getNotes(node);
@@ -93,7 +68,7 @@ public class MMETools {
 		}
 		return res;
 	}
-	
+
 	private void findNote(XMLNode xmlNode, HashSet<String> resultList) {
 		if (xmlNode != null) {
 			if (xmlNode.isText()) {
@@ -110,11 +85,19 @@ public class MMETools {
 			}
 		}
 	}
-	
+
 	/**
 	 * This method iterates over a set of nodes, extracting SBML notes that are then
 	 * going to be stored as attributes in {@link GsmmSession.nodeAttributeMap} -
-	 * Should be called before cloning!
+	 * This is done for species as well as for reactions.
+	 * 
+	 * This method exactly finds SBML notes of the form "[noteName] : [value]". The
+	 * [value] is then stored as attribute with the name [attributeName] for the
+	 * respective node.
+	 * 
+	 * The method iterates over the original nodes in the BaseGraph and then for any
+	 * node assigns the found attribute to all of the corresponding working copies
+	 * of that node.
 	 * 
 	 * @param nodes
 	 * @param noteName
@@ -163,9 +146,9 @@ public class MMETools {
 					String note = xmlNode.getCharacters().trim();
 					note = note.replace(noteName + ": ", "");
 					if (!note.equals("null")) {
-						MMEController.getInstance().getCurrentSession().addNodeAttribute(MMEController
-								.getInstance().getCurrentSession().getBaseGraph().getWorkingNode(node), attributeName,
-								note);
+						for (Node workingNode : MMEController.getInstance().getCurrentSession().getBaseGraph().getWorkingNodes(node)) {
+							MMEController.getInstance().getCurrentSession().addNodeAttribute(workingNode, attributeName, note);
+						}
 					}
 					return true;
 				} else {
@@ -186,8 +169,7 @@ public class MMETools {
 	/**
 	 * Check whether a certain node is a reaction node.
 	 * 
-	 * @param node
-	 *            The node to be checked
+	 * @param node The node to be checked
 	 * @return whether the given node is a reaction node
 	 */
 	public boolean isReaction(Node node) {
@@ -199,8 +181,7 @@ public class MMETools {
 	/**
 	 * Check whether a certain node is a species node.
 	 * 
-	 * @param node
-	 *            The node to be checked
+	 * @param node The node to be checked
 	 * @return whether the given node is a species node
 	 */
 	public boolean isSpecies(Node node) {
@@ -212,10 +193,8 @@ public class MMETools {
 	/**
 	 * Check whether a certain node has a given role.
 	 * 
-	 * @param node
-	 *            The node to be checked
-	 * @param role
-	 *            The role for which the role affiliation is to be checked
+	 * @param node The node to be checked
+	 * @param role The role for which the role affiliation is to be checked
 	 * @return whether the given node has the specified role
 	 */
 	public boolean isRole(Node node, String role) {

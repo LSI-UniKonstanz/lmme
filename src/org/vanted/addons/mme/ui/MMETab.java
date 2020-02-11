@@ -224,16 +224,16 @@ public class MMETab extends InspectorTab {
 		JPanel decompMethodSelect = combine(labelDecompMethod, cbDecompMethod, Color.WHITE, false, true);
 		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(decompMethodSelect, 0, 0, 5, 0), null, true);
 
+		JLabel dummyLabel = new JLabel("");
+		GuiRow cloningRow = new GuiRow(dummyLabel, null);
+		cloningRow.span = true;
+		fpSettings.addGuiComponentRow(cloningRow, true);
+		
 		GuiRow specificDecompSettingsRow = new GuiRow(new JLabel(""), null);
 		specificDecompSettingsRow.span = true;
 		fpSettings.addGuiComponentRow(specificDecompSettingsRow, true);
 
 		JComponent compCloning = createCloningComponent();
-
-		JLabel dummyLabel = new JLabel("");
-		GuiRow cloningRow = new GuiRow(dummyLabel, null);
-		cloningRow.span = true;
-		fpSettings.addGuiComponentRow(cloningRow, true);
 
 		cbDecompMethod.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -258,10 +258,10 @@ public class MMETab extends InspectorTab {
 				.setToolTipText("Constructs another subsystem that consists of all transport reactions.");
 		this.ckbAddTransporterSubS.setBackground(Color.WHITE);
 		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbAddTransporterSubS, 0, 0, 0, 0), null, true);
-		
+
 		this.ckbMapToEdgeThickness = new JCheckBox("Map subsystem connectivity to edge thickness");
-		this.ckbMapToEdgeThickness
-				.setToolTipText("<html>The edge thickness in the overview graph will be proportional to<br>the number of interface metabolites between the respective subsystems</html>");
+		this.ckbMapToEdgeThickness.setToolTipText(
+				"<html>The edge thickness in the overview graph will be proportional to<br>the number of interface metabolites between the respective subsystems</html>");
 		this.ckbMapToEdgeThickness.setBackground(Color.WHITE);
 		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbMapToEdgeThickness, 0, 0, 0, 0), null, true);
 
@@ -386,6 +386,9 @@ public class MMETab extends InspectorTab {
 				if (editedCloneList) {
 					clonableSpeciesFrame.setVisible(true);
 				} else if (MMEController.getInstance().getCurrentSession().getBaseGraph() != null) {
+					// We use getOriginalSpeciesWithDeg... here to ensure the possibility to perform
+					// another selection, even if there has already been done a decomposition based
+					// on a former selection.
 					ArrayList<Node> speciesAbove = MMEController.getInstance().getCurrentSession().getBaseGraph()
 							.getOriginalSpeciesWithDegreeAtLeast(sliderSplitDeg.getValue());
 					// ArrayList<String> speciesAboveLabels = new ArrayList<>();
@@ -589,7 +592,7 @@ public class MMETab extends InspectorTab {
 	public String getSubsystemLayoutMethod() {
 		return ((String) this.cbSubsystemLayout.getSelectedItem());
 	}
-	
+
 	public boolean getMapToEdgeThickness() {
 		return this.ckbMapToEdgeThickness.isSelected();
 	}
@@ -665,6 +668,10 @@ public class MMETab extends InspectorTab {
 		}
 	}
 
+	/**
+	 * 
+	 * @return the species to be cloned. Species in the returned list are from the originalGraph
+	 */
 	public ArrayList<Node> getClonableSpecies() {
 		ArrayList<Node> res = new ArrayList<>();
 		if (editedCloneList) {
@@ -675,7 +682,7 @@ public class MMETab extends InspectorTab {
 			}
 		} else {
 			return MMEController.getInstance().getCurrentSession().getBaseGraph()
-					.getSpeciesWithDegreeAtLeast(sliderSplitDeg.getValue());
+					.getOriginalSpeciesWithDegreeAtLeast(sliderSplitDeg.getValue());
 		}
 		return res;
 	}
@@ -707,7 +714,7 @@ public class MMETab extends InspectorTab {
 			OverviewGraph overviewGraph = session.getOverviewGraph();
 			setLblNumberOfSubsystems(overviewGraph.getDecomposition().getSubsystems().size());
 		} else {
-
+			resetLblNumberOfSubsystems();
 		}
 		// TODO SubsystemView Management query, what is shown?!
 	}
@@ -715,8 +722,7 @@ public class MMETab extends InspectorTab {
 	/**
 	 * This method allows to create a log message in the session information panel.
 	 * 
-	 * @param msg
-	 *            The message to be logged.
+	 * @param msg The message to be logged.
 	 */
 	public void logMsg(String msg) {
 		this.monitorLayout.insertRow(0, TableLayoutConstants.PREFERRED);
@@ -732,10 +738,8 @@ public class MMETab extends InspectorTab {
 	 * This emthod adds the given element as a new row into the given FolderPanel in
 	 * a way such that it spans the whole row
 	 * 
-	 * @param el
-	 *            The element to be added.
-	 * @param panel
-	 *            The FolderPanel into which the element should be inserted.
+	 * @param el    The element to be added.
+	 * @param panel The FolderPanel into which the element should be inserted.
 	 */
 	private static void addOneElementSpanning(JComponent el, FolderPanel panel) {
 		GuiRow gr = new GuiRow(el, null);
@@ -746,18 +750,13 @@ public class MMETab extends InspectorTab {
 	/**
 	 * This method is used to form a group of two JComponents.
 	 * 
-	 * @param left
-	 *            The left component
-	 * @param right
-	 *            The right component
-	 * @param color
-	 *            The background color of the new component
-	 * @param fill
-	 *            States whether the components should be aligned in a way that uses
-	 *            the entire horizontally available space.
-	 * @param spaced
-	 *            States whether there should be a small space separating the
-	 *            combined components.
+	 * @param left   The left component
+	 * @param right  The right component
+	 * @param color  The background color of the new component
+	 * @param fill   States whether the components should be aligned in a way that
+	 *               uses the entire horizontally available space.
+	 * @param spaced States whether there should be a small space separating the
+	 *               combined components.
 	 * @return The new component that results from combining the left and the right
 	 *         component.
 	 */
