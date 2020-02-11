@@ -18,11 +18,10 @@ import org.graffiti.selection.SelectionModel;
 import org.graffiti.session.EditorSession;
 import org.vanted.addons.mme.core.MMEController;
 import org.vanted.addons.mme.decomposition.MMDecomposition;
-
-import bsh.This;
+import org.vanted.addons.mme.ui.MMETab;
 
 public class OverviewGraph {
-	
+
 	private final int nodeSize = 100;
 
 	private Graph graph;
@@ -74,20 +73,18 @@ public class OverviewGraph {
 			nodeToSubsystemMap.put(subsystemNode, subsystem);
 		}
 
-		int edges = 0, dirEdges = 0;
-		
-		for (Edge e : MMEController.getInstance().getCurrentSession().getBaseGraph().getGraph().getEdges()) {
-			edges++;
-			if (e.isDirected()) {dirEdges++;}
-		}
-		
-		for (SubsystemGraph sourceSystem : this.decomposition.getSubsystems()) {
-			for (SubsystemGraph targetSystem : this.decomposition.getSubsystems()) {
-				if ((sourceSystem != targetSystem) && (!getInterfaceNodes(sourceSystem, targetSystem).isEmpty())) {
-					Node sourceNode = subsystemToNodeMap.get(sourceSystem);
-					Node targetNode = subsystemToNodeMap.get(targetSystem);
-					graph.addEdge(sourceNode, targetNode, true,
-							AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, true));
+		for (int i = 0; i < this.decomposition.getSubsystems().size(); i++) {
+			for (int j = i + 1; j < this.decomposition.getSubsystems().size(); j++) {
+				SubsystemGraph subsystem1 = this.decomposition.getSubsystems().get(i);
+				SubsystemGraph subsystem2 = this.decomposition.getSubsystems().get(j);
+				int totalInterfaces = getInterfaceNodes(subsystem1, subsystem2).size()
+						+ getInterfaceNodes(subsystem2, subsystem1).size();
+				if (totalInterfaces > 0) {
+					Node sourceNode = subsystemToNodeMap.get(subsystem1);
+					Node targetNode = subsystemToNodeMap.get(subsystem2);
+					Edge addedEdge = graph.addEdge(sourceNode, targetNode, false,
+							AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
+					AttributeHelper.setFrameThickNess(addedEdge, totalInterfaces > 20 ? 20.0 : (double) totalInterfaces);
 				}
 			}
 		}
@@ -97,7 +94,7 @@ public class OverviewGraph {
 		// TODO Create interface maps
 		// TODO Construct nodeToSubsystem map during construction of graph.
 	}
-	
+
 	/**
 	 * @return the nodeSize
 	 */
@@ -160,8 +157,7 @@ public class OverviewGraph {
 			interfaceMap.put(subsystem1, hmap);
 		}
 
-		for (Node speciesNode : MMEController.getInstance().getCurrentSession().getBaseGraph()
-				.getSpeciesNodes()) {
+		for (Node speciesNode : MMEController.getInstance().getCurrentSession().getBaseGraph().getSpeciesNodes()) {
 			Collection<Node> inneighbors = speciesNode.getAllInNeighbors();
 			Collection<Node> outneighbors = speciesNode.getAllOutNeighbors();
 			HashSet<SubsystemGraph> inSystems = new HashSet<>();

@@ -174,12 +174,11 @@ public class MMEController {
 				}
 				partiallyResetSession();
 			}
-			MMDecomposition decomposition = this.decompositionAlgorithmsMap.get(this.tab.getDecompositionMethod())
-					.run(this.tab.getAddTransporterSubS(), this.tab.getAddDefaultSubS(), this.tab.getSplitDefaultSubS(),
-							this.tab.getSplitDefaultSubSThreshold());
+			MMDecomposition decomposition = this.decompositionAlgorithmsMap.get(this.tab.getDecompositionMethod()).run(
+					this.tab.getAddTransporterSubS(), this.tab.getAddDefaultSubS(), this.tab.getSplitDefaultSubS(),
+					this.tab.getSplitDefaultSubSThreshold());
 			this.currentSession.setOverviewGraph(new OverviewGraph(decomposition));
-			MMEViewManagement.getInstance()
-					.showAsOverviewGraph(this.currentSession.getOverviewGraph().getGraph());
+			MMEViewManagement.getInstance().showAsOverviewGraph(this.currentSession.getOverviewGraph().getGraph());
 			this.overviewLayoutsMap.get(this.tab.getOverviewLayoutMethod())
 					.layOut(MMEViewManagement.getInstance().getOverviewFrame().getView().getGraph());
 			MMESubsystemViewManagement.getInstance().resetLists();
@@ -193,41 +192,47 @@ public class MMEController {
 
 	public void showSubsystemGraphsAction() {
 		ArrayList<SubsystemGraph> selectedSubsystems = this.currentSession.getOverviewGraph().getSelectedSubsystems();
-		MMESubsystemViewManagement.getInstance().showSubsystems(selectedSubsystems, this.tab.getClearSubsystemView(),
-				this.tab.getCkbUseColorMapping());
+		if (!selectedSubsystems.isEmpty()) {
+			MMESubsystemViewManagement.getInstance().showSubsystems(selectedSubsystems,
+					this.tab.getClearSubsystemView(), this.tab.getCkbUseColorMapping());
+			this.subsystemLayoutsMap.get(this.tab.getSubsystemLayoutMethod())
+					.layOut(MMEViewManagement.getInstance().getSubsystemFrame().getView().getGraph());
+		} else {
+			JOptionPane.showMessageDialog(null, "There are no subsystems selected in the overview graph.");
+			return;
+		}
 
-		this.subsystemLayoutsMap.get(this.tab.getSubsystemLayoutMethod())
-				.layOut(MMEViewManagement.getInstance().getSubsystemFrame().getView().getGraph());
 	}
 
 	/**
 	 * This method translates the model to SBGN if the SBGN-ED addon is available.
 	 * TODO: move translation to background thread, runs currently in main thread
-	 * TODO: provide proper error message to user if method is not available because SBGN-ED addon is not available OR deactivate button
-	 * TODO: currently the original graph is translated to SBGN, maybe translate the copy?
+	 * TODO: provide proper error message to user if method is not available because
+	 * SBGN-ED addon is not available OR deactivate button TODO: currently the
+	 * original graph is translated to SBGN, maybe translate the copy?
 	 * 
-	 * @return An ActionListener that is put on the translate to SBGN button in the extension tab.
 	 */
 	public void transformToSbgnAction() {
 
 		try {
-			Class<?> SBMLTranslationMode = Class.forName("org.sbgned.translation.SBMLTranslationMode", true, InstanceLoader.getCurrentLoader());
+			Class<?> SBMLTranslationMode = Class.forName("org.sbgned.translation.SBMLTranslationMode", true,
+					InstanceLoader.getCurrentLoader());
 			Object[] enumConstants = SBMLTranslationMode.getEnumConstants();
-			Class<?> SBMLTranslation = Class.forName("org.sbgned.translation.SBMLTranslation", true, InstanceLoader.getCurrentLoader());
+			Class<?> SBMLTranslation = Class.forName("org.sbgned.translation.SBMLTranslation", true,
+					InstanceLoader.getCurrentLoader());
 			Constructor<?> constructor = SBMLTranslation.getDeclaredConstructor(SBMLTranslationMode);
 			// enumConstants[0] INTERACTIVE, enumConstants[1] NONINTERACTIVE
 			Object instance = constructor.newInstance(enumConstants[1]);
-			
+
 			GraffitiInternalFrame gif = MMEViewManagement.getInstance().getSubsystemFrame();
 			MainFrame.getInstance().setActiveSession(gif.getSession(), gif.getView());
-			
+
 			// runs as algorithm to get the current graph
 			GravistoService.getInstance().runAlgorithm((Algorithm) instance, null);
 			GraphHelper.issueCompleteRedrawForActiveView();
-			
+
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Could not find SBGN-ED Add-on. Please make sure that it is installed before using this function.");
 		} catch (NoSuchMethodException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -247,7 +252,7 @@ public class MMEController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	private void resetSession() {
