@@ -69,6 +69,7 @@ public class MMETab extends InspectorTab {
 	private JPanel monitorInnerPanel;
 	private JScrollPane monitorScrollPane;
 
+	private JCheckBox ckbMapToEdgeThickness;
 	private JCheckBox ckbAddTransporterSubS;
 	private JCheckBox ckbAddDefaultSubS;
 	private JCheckBox ckbSplitDefaultSubS;
@@ -257,6 +258,12 @@ public class MMETab extends InspectorTab {
 				.setToolTipText("Constructs another subsystem that consists of all transport reactions.");
 		this.ckbAddTransporterSubS.setBackground(Color.WHITE);
 		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbAddTransporterSubS, 0, 0, 0, 0), null, true);
+		
+		this.ckbMapToEdgeThickness = new JCheckBox("Map subsystem connectivity to edge thickness");
+		this.ckbMapToEdgeThickness
+				.setToolTipText("<html>The edge thickness in the overview graph will be proportional to<br>the number of interface metabolites between the respective subsystems</html>");
+		this.ckbMapToEdgeThickness.setBackground(Color.WHITE);
+		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbMapToEdgeThickness, 0, 0, 0, 0), null, true);
 
 		this.ckbAddDefaultSubS = new JCheckBox("Add Default Subsystem");
 		this.ckbAddDefaultSubS.setToolTipText(
@@ -525,7 +532,8 @@ public class MMETab extends InspectorTab {
 	 * @param numberOfReactions
 	 */
 	public void setBaseGraphInfo(String name, int numberOfMetabolites, int numberOfReactions) {
-		this.lblSessionInfoBaseGraph.setText(name);
+		String nameToShow = name.length() > 40 ? name.substring(0, 39) + "..." : name;
+		this.lblSessionInfoBaseGraph.setText(nameToShow);
 		this.lblSessionInfoMetabolites.setText(Integer.toString(numberOfMetabolites));
 		this.lblSessionInfoReactions.setText(Integer.toString(numberOfReactions));
 	}
@@ -580,6 +588,10 @@ public class MMETab extends InspectorTab {
 	 */
 	public String getSubsystemLayoutMethod() {
 		return ((String) this.cbSubsystemLayout.getSelectedItem());
+	}
+	
+	public boolean getMapToEdgeThickness() {
+		return this.ckbMapToEdgeThickness.isSelected();
 	}
 
 	/**

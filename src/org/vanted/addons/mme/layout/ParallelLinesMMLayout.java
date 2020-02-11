@@ -64,7 +64,7 @@ public class ParallelLinesMMLayout implements MMSubsystemLayout {
 	 */
 	@Override
 	public String getName() {
-		return "Parallel Lines";
+		return "Bipartite Graph";
 	}
 
 }

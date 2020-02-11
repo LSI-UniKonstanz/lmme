@@ -92,6 +92,11 @@ public class PredefinedMMDecomposition extends MMDecompositionAlgorithm {
 		} else {
 			cb = new JComboBox<String>();
 		}
+		for (int i = 0; i < cb.getItemCount(); i++) {
+			if (cb.getItemAt(i).equalsIgnoreCase("SUBSYSTEM")) {
+				cb.setSelectedIndex(i);
+			}
+		}
 		return cb;
 	}
 

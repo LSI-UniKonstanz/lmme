@@ -416,6 +416,11 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 		} else {
 			cb = new JComboBox<String>();
 		}
+		for (int i = 0; i < cb.getItemCount(); i++) {
+			if (cb.getItemAt(i).equalsIgnoreCase("KEGG")) {
+				cb.setSelectedIndex(i);
+			}
+		}
 		return cb;
 	}
 	
