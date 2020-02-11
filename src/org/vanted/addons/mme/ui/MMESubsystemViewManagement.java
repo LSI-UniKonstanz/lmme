@@ -70,11 +70,15 @@ public class MMESubsystemViewManagement {
 
 		int species = 0;
 		int reactions = 0;
+		
+		HashSet<Node> speciesHashSet = new HashSet<Node>();
+		HashSet<Node> reactionsHashSet = new HashSet<Node>();
+		
 		for (SubsystemGraph subsystem : currentSubSystems) {
-			species += subsystem.getNumberOfSpecies();
-			reactions += subsystem.getNumberOfReactions();
+			speciesHashSet.addAll(subsystem.getSpeciesNodes());
+			reactionsHashSet.addAll(subsystem.getReactionNodes());
 		}
-		MMEController.getInstance().getTab().setSubsystemInfo(currentSubSystems.size(), species, reactions);
+		MMEController.getInstance().getTab().setSubsystemInfo(currentSubSystems.size(), speciesHashSet.size(), reactionsHashSet.size());
 	}
 
 	/**

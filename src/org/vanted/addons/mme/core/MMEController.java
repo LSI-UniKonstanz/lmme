@@ -141,6 +141,7 @@ public class MMEController {
 							+ "and delete the data from the current session. Do you want to continue?</html>",
 					"Warning: Model already set", JOptionPane.YES_NO_OPTION);
 			if (option == 0) {
+				MMEViewManagement.getInstance().closeFrames();
 				resetSession();
 			} else {
 				return;
@@ -172,6 +173,7 @@ public class MMEController {
 				if ((option == 1) || (option == -1)) {
 					return;
 				}
+				MMEViewManagement.getInstance().closeFrames();
 				partiallyResetSession();
 			}
 			MMDecomposition decomposition = this.decompositionAlgorithmsMap.get(this.tab.getDecompositionMethod()).run(
@@ -257,11 +259,12 @@ public class MMEController {
 
 	private void resetSession() {
 		currentSession = new MMESession();
-		this.tab.resetLblNumberOfSubsystems();
+		this.tab.updateGUI();
 	}
 
-	private void partiallyResetSession() {
+	public void partiallyResetSession() {
 		Graph originalGraph = currentSession.getBaseGraph().getOriginalGraph();
 		currentSession = new MMESession(new BaseGraph(originalGraph));
+		this.tab.updateGUI();
 	}
 }

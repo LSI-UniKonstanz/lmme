@@ -44,7 +44,7 @@ public abstract class MMDecompositionAlgorithm {
 		MMETab tab = MMEController.getInstance().getTab();
 
 		if (this.requiresCloning()) {
-			MMETools.getInstance().cloneSpecies(tab.getClonableSpecies(), tab.getClonableSpeciesThreshold());
+			MMEController.getInstance().getCurrentSession().getBaseGraph().cloneSpecies(tab.getClonableSpecies());
 		}
 		ArrayList<SubsystemGraph> specificSubsystems = runSpecific();
 
@@ -278,7 +278,7 @@ public abstract class MMDecompositionAlgorithm {
 	public abstract boolean requiresCloning();
 
 	public abstract FolderPanel getFolderPanel();
-	
+
 	public abstract void updateFolderPanel();
 
 	public abstract String getName();
