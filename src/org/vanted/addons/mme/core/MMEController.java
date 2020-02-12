@@ -27,6 +27,7 @@ import org.graffiti.graph.Graph;
 import org.graffiti.plugin.algorithm.Algorithm;
 import org.graffiti.util.InstanceLoader;
 import org.sbml.jsbml.util.SBMLtools;
+import org.vanted.addons.mme.decomposition.CompartmentMMDecomposition;
 import org.vanted.addons.mme.decomposition.GirvanMMDecomposition;
 import org.vanted.addons.mme.decomposition.MMDecomposition;
 import org.vanted.addons.mme.decomposition.MMDecompositionAlgorithm;
@@ -77,11 +78,13 @@ public class MMEController {
 		PredefinedMMDecomposition predefDecomp = new PredefinedMMDecomposition();
 		KeggMMDecomposition keggDecomp = new KeggMMDecomposition();
 		SchusterMMDecomposition schusterDecomp = new SchusterMMDecomposition();
-		GirvanMMDecomposition girvanDecomp = new GirvanMMDecomposition();
+		CompartmentMMDecomposition compartmentDecomp = new CompartmentMMDecomposition();
+//		GirvanMMDecomposition girvanDecomp = new GirvanMMDecomposition();
 
 		decompositionAlgorithmsMap.put(predefDecomp.getName(), predefDecomp);
 		decompositionAlgorithmsMap.put(keggDecomp.getName(), keggDecomp);
 		decompositionAlgorithmsMap.put(schusterDecomp.getName(), schusterDecomp);
+		decompositionAlgorithmsMap.put(compartmentDecomp.getName(), compartmentDecomp);
 //		decompositionAlgorithmsMap.put(girvanDecomp.getName(), girvanDecomp);
 
 		ForceDirectedMMLayout forceLayout = new ForceDirectedMMLayout();
@@ -177,8 +180,7 @@ public class MMEController {
 				partiallyResetSession();
 			}
 			MMDecomposition decomposition = this.decompositionAlgorithmsMap.get(this.tab.getDecompositionMethod()).run(
-					this.tab.getAddTransporterSubS(), this.tab.getAddDefaultSubS(), this.tab.getSplitDefaultSubS(),
-					this.tab.getSplitDefaultSubSThreshold());
+					this.tab.getAddTransporterSubS());
 			this.currentSession.setOverviewGraph(new OverviewGraph(decomposition));
 			MMEViewManagement.getInstance().showAsOverviewGraph(this.currentSession.getOverviewGraph().getGraph());
 			this.overviewLayoutsMap.get(this.tab.getOverviewLayoutMethod())

@@ -71,9 +71,6 @@ public class MMETab extends InspectorTab {
 
 	private JCheckBox ckbMapToEdgeThickness;
 	private JCheckBox ckbAddTransporterSubS;
-	private JCheckBox ckbAddDefaultSubS;
-	private JCheckBox ckbSplitDefaultSubS;
-	private JTextField tfSplitDefaultSubSThreshold;
 
 	private JComboBox<String> cbDecompMethod;
 	private JComboBox<String> cbOverviewLayout;
@@ -265,35 +262,13 @@ public class MMETab extends InspectorTab {
 		this.ckbMapToEdgeThickness.setBackground(Color.WHITE);
 		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbMapToEdgeThickness, 0, 0, 0, 0), null, true);
 
-		this.ckbAddDefaultSubS = new JCheckBox("Add Default Subsystem");
-		this.ckbAddDefaultSubS.setToolTipText(
-				"Constructs another subsystem that consists of all reactions that remained unclassified.");
-		this.ckbAddDefaultSubS.setBackground(Color.WHITE);
-		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbAddDefaultSubS, 0, 0, 0, 0), null, true);
-
-		this.ckbSplitDefaultSubS = new JCheckBox("Extract default components of size ");
-		this.ckbSplitDefaultSubS.setToolTipText(
-				"<html>If ticked, the connected components of the default subsystem are computed <br> and treated "
-						+ "as individual subsystems if they contain at least as many nodes as specified below.</html>");
-		this.ckbSplitDefaultSubS.setBackground(Color.WHITE);
-		// fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbSplitDefaultSubS,
-		// 0, 0, 0, 0), null, true);
-
-		// JLabel lblSplitDefaultSubSThreshold = new JLabel("Threshold:");
-		this.tfSplitDefaultSubSThreshold = new JTextField(5);
-		JPanel pSplitDefaultSubSThreshold = combine(ckbSplitDefaultSubS, tfSplitDefaultSubSThreshold, Color.WHITE,
-				false, false);
-		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(pSplitDefaultSubSThreshold, 0, 0, 0, 0), null,
-				true);
-		tfSplitDefaultSubSThreshold.setText("5");
-
-		ckbAddDefaultSubS.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				ckbSplitDefaultSubS.setEnabled(ckbAddDefaultSubS.isSelected());
-				tfSplitDefaultSubSThreshold.setEditable(ckbAddDefaultSubS.isSelected());
-			}
-		});
-		ckbAddDefaultSubS.setSelected(true);
+// Snippet might be useful in the future
+//		ckbAddDefaultSubS.addItemListener(new ItemListener() {
+//			public void itemStateChanged(ItemEvent e) {
+//				ckbSplitDefaultSubS.setEnabled(ckbAddDefaultSubS.isSelected());
+//				tfSplitDefaultSubSThreshold.setEditable(ckbAddDefaultSubS.isSelected());
+//			}
+//		});
 
 		JLabel labelOverviewLayoutAlgo = new JLabel("Layout Method:");
 		Set<String> overviewLayouts = MMEController.getInstance().getOverviewLayoutsMap().keySet();
@@ -602,35 +577,6 @@ public class MMETab extends InspectorTab {
 	 */
 	public boolean getAddTransporterSubS() {
 		return this.ckbAddTransporterSubS.isSelected();
-	}
-
-	/**
-	 * @return the ckbAddDefaultSubS
-	 */
-	public boolean getAddDefaultSubS() {
-		return this.ckbAddDefaultSubS.isSelected();
-	}
-
-	/**
-	 * @return the ckbSplitDefaultSubS
-	 */
-	public boolean getSplitDefaultSubS() {
-		return this.ckbSplitDefaultSubS.isSelected();
-	}
-
-	/**
-	 * @return the tfSplitDefaultSubSThreshold
-	 */
-	public int getSplitDefaultSubSThreshold() {
-		int res;
-		try {
-			res = Integer.parseInt(this.tfSplitDefaultSubSThreshold.getText());
-		} catch (NumberFormatException e) {
-			JOptionPane.showMessageDialog(null, "The split threshold for the default subsystem could not be read. "
-					+ "It has therefore been set to 5.");
-			res = 5;
-		}
-		return res;
 	}
 
 	/**

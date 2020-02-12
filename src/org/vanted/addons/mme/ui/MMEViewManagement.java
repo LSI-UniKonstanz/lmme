@@ -72,6 +72,7 @@ public class MMEViewManagement {
 		subsystemFrame.addInternalFrameListener(new InternalFrameAdapter() {
 			public void internalFrameClosing(InternalFrameEvent e) {
 				MMEController.getInstance().getTab().resetSubsystemInfo();
+				MMESubsystemViewManagement.getInstance().resetLists();
 			}
 		});
 		reArrangeFrames();

@@ -19,6 +19,10 @@ import org.vanted.addons.mme.core.MMESession;
 import org.vanted.addons.mme.graphs.BaseGraph;
 import org.vanted.addons.mme.graphs.SubsystemGraph;
 
+import de.ipk_gatersleben.ag_nw.graffiti.NodeTools;
+import de.ipk_gatersleben.ag_nw.graffiti.plugins.editcomponents.cluster_colors.ClusterColorAttribute;
+import de.ipk_gatersleben.ag_nw.graffiti.plugins.layouters.pattern_springembedder.clusterCommands.PajekClusterColor;
+
 /**
  * This class manages the subsystem view during the exploration phase. Among
  * others, it is responsible for the resonable combination of selected subsystem
@@ -32,7 +36,7 @@ public class MMESubsystemViewManagement {
 
 	private static MMESubsystemViewManagement instance;
 
-	private ArrayList<SubsystemGraph> currentSubSystems;
+	private ArrayList<SubsystemGraph> currentSubsystems;
 
 	private Color[] colors;
 
@@ -41,7 +45,7 @@ public class MMESubsystemViewManagement {
 	private HashMap<SubsystemGraph, Color> colorMap;
 
 	private MMESubsystemViewManagement() {
-		this.currentSubSystems = new ArrayList<>();
+		this.currentSubsystems = new ArrayList<>();
 		colors = new Color[] { Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.ORANGE, Color.PINK, Color.RED,
 				Color.YELLOW };
 		defaultColor = Color.GRAY;
@@ -67,18 +71,15 @@ public class MMESubsystemViewManagement {
 		} else {
 			addSubsystems(subsystems, useColor);
 		}
-
-		int species = 0;
-		int reactions = 0;
 		
 		HashSet<Node> speciesHashSet = new HashSet<Node>();
 		HashSet<Node> reactionsHashSet = new HashSet<Node>();
 		
-		for (SubsystemGraph subsystem : currentSubSystems) {
+		for (SubsystemGraph subsystem : currentSubsystems) {
 			speciesHashSet.addAll(subsystem.getSpeciesNodes());
 			reactionsHashSet.addAll(subsystem.getReactionNodes());
 		}
-		MMEController.getInstance().getTab().setSubsystemInfo(currentSubSystems.size(), speciesHashSet.size(), reactionsHashSet.size());
+		MMEController.getInstance().getTab().setSubsystemInfo(currentSubsystems.size(), speciesHashSet.size(), reactionsHashSet.size());
 	}
 
 	/**
@@ -89,10 +90,10 @@ public class MMESubsystemViewManagement {
 	 * @param subsystemsToAdd
 	 */
 	public void addSubsystems(ArrayList<SubsystemGraph> subsystemsToAdd, boolean useColor) {
-		int nextColorIndex = this.currentSubSystems.size();
+		int nextColorIndex = this.currentSubsystems.size();
 		for (SubsystemGraph subsystem : subsystemsToAdd) {
-			if (!currentSubSystems.contains(subsystem)) {
-				currentSubSystems.add(subsystem);
+			if (!currentSubsystems.contains(subsystem)) {
+				currentSubsystems.add(subsystem);
 				if (useColor) {
 					if (nextColorIndex <= colors.length - 1) {
 						colorMap.put(subsystem, colors[nextColorIndex]);
@@ -114,14 +115,14 @@ public class MMESubsystemViewManagement {
 	 * @param subsystems
 	 */
 	public void replaceSubsystems(ArrayList<SubsystemGraph> subsystems, boolean useColor) {
-		for (SubsystemGraph subsystem : currentSubSystems) {
+		for (SubsystemGraph subsystem : currentSubsystems) {
 			AttributeHelper.setFillColor(MMEController.getInstance().getCurrentSession().getOverviewGraph()
 					.getNodeOfSubsystem(subsystem), Color.WHITE);
 		}
-		currentSubSystems.clear();
+		currentSubsystems.clear();
 		int nextColorIndex = 0;
 		for (SubsystemGraph subsystem : subsystems) {
-			currentSubSystems.add(subsystem);
+			currentSubsystems.add(subsystem);
 			if (useColor) {
 				if (nextColorIndex <= colors.length - 1) {
 					colorMap.put(subsystem, colors[nextColorIndex]);
@@ -139,17 +140,17 @@ public class MMESubsystemViewManagement {
 	 * be shown.
 	 */
 	private void updateView(boolean useColor) {
-
+		
 		BaseGraph baseGraph = MMEController.getInstance().getCurrentSession().getBaseGraph();
 
 		Graph consolidatedSubsystemGraph = new AdjListGraph(
 				(CollectionAttribute) baseGraph.getOriginalGraph().getAttributes().copy());
-
+		
 		HashMap<Node, Node> nodes2newNodes = new HashMap<>();
 		HashSet<Edge> addedEdges = new HashSet<>();
 		HashSet<Node> processedInterfaces = new HashSet<>();
 
-		for (SubsystemGraph subsystem : currentSubSystems) {
+		for (SubsystemGraph subsystem : currentSubsystems) {
 			if (useColor) {
 				AttributeHelper.setFillColor(MMEController.getInstance().getCurrentSession().getOverviewGraph()
 						.getNodeOfSubsystem(subsystem), colorMap.get(subsystem));
@@ -174,15 +175,17 @@ public class MMESubsystemViewManagement {
 				}
 			}
 			for (Edge edge : subsystem.getEdges()) {
-				Node sourceNode = nodes2newNodes.get(edge.getSource());
-				Node targetNode = nodes2newNodes.get(edge.getTarget());
-				consolidatedSubsystemGraph.addEdgeCopy(edge, sourceNode, targetNode);
-				addedEdges.add(edge);
+				if (!addedEdges.contains(edge)) {
+					Node sourceNode = nodes2newNodes.get(edge.getSource());
+					Node targetNode = nodes2newNodes.get(edge.getTarget());
+					consolidatedSubsystemGraph.addEdgeCopy(edge, sourceNode, targetNode);
+					addedEdges.add(edge);
+				}
 			}
 		}
 
-		for (SubsystemGraph sourceSystem : currentSubSystems) {
-			for (SubsystemGraph targetSystem : currentSubSystems) {
+		for (SubsystemGraph sourceSystem : currentSubsystems) {
+			for (SubsystemGraph targetSystem : currentSubsystems) {
 				if (sourceSystem != targetSystem) {
 
 					ArrayList<Node> interfaces = MMEController.getInstance().getCurrentSession()
@@ -216,13 +219,12 @@ public class MMESubsystemViewManagement {
 				}
 			}
 		}
-
 		MMEViewManagement.getInstance().showAsSubsystemGraph(consolidatedSubsystemGraph);
 	}
 
 	public void resetLists() {
 		this.colorMap.clear();
-		this.currentSubSystems.clear();
+		this.currentSubsystems.clear();
 	}
 
 	// TODO maintain list of currently shown subsystems, create color mapping

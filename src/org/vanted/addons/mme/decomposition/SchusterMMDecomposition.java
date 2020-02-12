@@ -3,6 +3,7 @@ package org.vanted.addons.mme.decomposition;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JLabel;
@@ -32,7 +33,7 @@ public class SchusterMMDecomposition extends MMDecompositionAlgorithm {
 	private final String ATTRIBUTE_NAME_SUBSYSTEM = "SchusterSubsystem";
 
 	@Override
-	protected ArrayList<SubsystemGraph> runSpecific() {
+	protected ArrayList<SubsystemGraph> runSpecific(HashSet<Node> alreadyClassifiedNodes) {
 
 		BaseGraph baseGraph = MMEController.getInstance().getCurrentSession().getBaseGraph();
 
@@ -77,7 +78,7 @@ public class SchusterMMDecomposition extends MMDecompositionAlgorithm {
 		for (Set<Node> nodes : connComps) {
 			for (Node node : nodes) {
 				Node originalNode = copied2OriginalNodes.get(node);
-				if (MMETools.getInstance().isReaction(originalNode)) {
+				if (MMETools.getInstance().isReaction(originalNode) && !alreadyClassifiedNodes.contains(originalNode)) {
 					MMEController.getInstance().getCurrentSession().addNodeAttribute(originalNode,
 							this.ATTRIBUTE_NAME_SUBSYSTEM, "Algorithmically derived Subsystem " + count);
 				}
@@ -85,7 +86,7 @@ public class SchusterMMDecomposition extends MMDecompositionAlgorithm {
 			count++;
 		}
 
-		return determineSubsystemsFromReactionAttributes(this.ATTRIBUTE_NAME_SUBSYSTEM, true, ";");
+		return determineSubsystemsFromReactionAttributes(this.ATTRIBUTE_NAME_SUBSYSTEM, true, ";", alreadyClassifiedNodes);
 	}
 
 	/**
