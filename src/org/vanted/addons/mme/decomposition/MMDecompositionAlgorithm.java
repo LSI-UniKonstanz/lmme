@@ -34,11 +34,10 @@ public abstract class MMDecompositionAlgorithm {
 
 	// Returns arraylist of subsystems, the subsystems itself should only contain
 	// references to the basegraph.
-	protected abstract ArrayList<SubsystemGraph> runSpecific();
+	protected abstract ArrayList<SubsystemGraph> runSpecific(HashSet<Node> alreadyClassifiedNodes);
 
 	// returns decomposition?
-	public MMDecomposition run(boolean addTransporterSubsystem, boolean addDefaultSubsystem,
-			boolean splitDefaultSubsystem, int minimumSubsystemSize) {
+	public MMDecomposition run(boolean addTransporterSubsystem) {
 
 		MMESession currentSession = MMEController.getInstance().getCurrentSession();
 		MMETab tab = MMEController.getInstance().getTab();
@@ -46,33 +45,29 @@ public abstract class MMDecompositionAlgorithm {
 		if (this.requiresCloning()) {
 			MMEController.getInstance().getCurrentSession().getBaseGraph().cloneSpecies(tab.getClonableSpecies());
 		}
-		ArrayList<SubsystemGraph> specificSubsystems = runSpecific();
+
+		HashSet<Node> transporters;
+		SubsystemGraph transporterSubsystem = null;
+
+		if (addTransporterSubsystem) {
+			transporterSubsystem = this.determineTransporterSubsystem();
+			transporters = (HashSet<Node>) transporterSubsystem.getReactionNodes().clone();
+		} else {
+			transporters = new HashSet<>();
+		}
+
+		ArrayList<SubsystemGraph> specificSubsystems = runSpecific(transporters);
+
+		if (transporterSubsystem != null) {
+			specificSubsystems.add(transporterSubsystem);
+		}
 
 		MMDecomposition decomposition = new MMDecomposition(specificSubsystems);
 
-		if (addTransporterSubsystem) {
-			decomposition.addSubsystem(this.determineTransporterSubsystem(decomposition));
-		}
+		SubsystemGraph defaultSubsystem = this.determineDefaultSubsystem(decomposition);
 
-		if (addDefaultSubsystem) {
-			SubsystemGraph defaultSubsystem = this.determineDefaultSubsystem(decomposition);
-
-			if (defaultSubsystem != null) {
-				if (splitDefaultSubsystem) {
-					ArrayList<SubsystemGraph> subsystems = this.splitDefaultSubsystem(decomposition, defaultSubsystem,
-							minimumSubsystemSize);
-					for (SubsystemGraph subsystem : subsystems) {
-						decomposition.addSubsystem(subsystem);
-					}
-					SubsystemGraph remainingDefaultSubsystem = determineDefaultSubsystem(decomposition);
-					if (remainingDefaultSubsystem != null) {
-						remainingDefaultSubsystem.setName("Default Subsystem 0");
-						decomposition.addSubsystem(remainingDefaultSubsystem);
-					}
-				} else {
-					decomposition.addSubsystem(defaultSubsystem);
-				}
-			}
+		if (defaultSubsystem != null) {
+			decomposition.addSubsystem(defaultSubsystem);
 		}
 
 		return decomposition;
@@ -80,45 +75,35 @@ public abstract class MMDecompositionAlgorithm {
 		// possibly create the additional subsystem
 	}
 
-	private SubsystemGraph determineTransporterSubsystem(MMDecomposition decomposition) {
+	private SubsystemGraph determineTransporterSubsystem() {
 		HashSet<Node> speciesNodes = new HashSet<>();
 		HashSet<Node> reactionNodes = new HashSet<>();
 		HashSet<Edge> edges = new HashSet<>();
 
 		for (Node reactionNode : MMEController.getInstance().getCurrentSession().getBaseGraph().getReactionNodes()) {
-			if (!decomposition.hasReactionBeenClassified(reactionNode)) {
-				Collection<Edge> inEdges = reactionNode.getDirectedInEdges();
-				Collection<Edge> outEdges = reactionNode.getDirectedOutEdges();
-				if ((inEdges.size() == 1) && (outEdges.size() == 1)) {
-					Node inNeighbor = null;
-					Node outNeighbor = null;
-					Edge inEdge = null;
-					Edge outEdge = null;
-					for (Edge edge : inEdges) {
-						inEdge = edge;
-						inNeighbor = edge.getSource();
-					}
-					for (Edge edge : outEdges) {
-						outEdge = edge;
-						outNeighbor = edge.getTarget();
-					}
 
-					if (AttributeHelper.hasAttribute(inNeighbor, SBML_Constants.SBML, SBML_Constants.COMPARTMENT)
-							&& AttributeHelper.hasAttribute(outNeighbor, SBML_Constants.SBML,
-									SBML_Constants.COMPARTMENT)) {
-						String comp0 = (String) AttributeHelper.getAttributeValue(inNeighbor, SBML_Constants.SBML,
-								SBML_Constants.COMPARTMENT, "", "");
-						String comp1 = (String) AttributeHelper.getAttributeValue(outNeighbor, SBML_Constants.SBML,
-								SBML_Constants.COMPARTMENT, "", "");
-						if (comp0 != comp1) {
-							speciesNodes.add(inNeighbor);
-							speciesNodes.add(outNeighbor);
-							reactionNodes.add(reactionNode);
-							edges.add(inEdge);
-							edges.add(outEdge);
-						}
-					}
+			HashSet<String> compartments = new HashSet<String>();
+			Collection<Edge> edgeSet = reactionNode.getEdges();
+			HashSet<Node> neighbors = new HashSet<Node>();
+
+			for (Edge edge : edgeSet) {
+				Node neighbor;
+				if (edge.getSource() == reactionNode) {
+					neighbor = edge.getTarget();
+				} else {
+					neighbor = edge.getSource();
 				}
+				if (AttributeHelper.hasAttribute(neighbor, SBML_Constants.SBML, SBML_Constants.COMPARTMENT)) {
+					compartments.add((String) AttributeHelper.getAttributeValue(neighbor, SBML_Constants.SBML,
+							SBML_Constants.COMPARTMENT, "", ""));
+				}
+				neighbors.add(neighbor);
+			}
+
+			if (compartments.size() > 1) {
+				speciesNodes.addAll(neighbors);
+				reactionNodes.add(reactionNode);
+				edges.addAll(edgeSet);
 			}
 		}
 
@@ -211,7 +196,7 @@ public abstract class MMDecompositionAlgorithm {
 	}
 
 	protected ArrayList<SubsystemGraph> determineSubsystemsFromReactionAttributes(String attributeName,
-			boolean considerSeparator, String separator) {
+			boolean considerSeparator, String separator, HashSet<Node> alreadyClassifiedNodes) {
 
 		BaseGraph baseGraph = MMEController.getInstance().getCurrentSession().getBaseGraph();
 		MMESession currentSession = MMEController.getInstance().getCurrentSession();
@@ -219,15 +204,16 @@ public abstract class MMDecompositionAlgorithm {
 		HashSet<String> allSubsystemNames = new HashSet<>();
 
 		for (Node reactionNode : baseGraph.getReactionNodes()) {
-			String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
-			if (subsystemName != "") {
-				if (considerSeparator) {
-					String[] subsystemNames = subsystemName.split(Pattern.quote(separator));
-					allSubsystemNames.addAll(Arrays.asList(subsystemNames));
-				} else {
-					allSubsystemNames.add(subsystemName);
+			if (!alreadyClassifiedNodes.contains(reactionNode)) {
+				String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
+				if (subsystemName != "") {
+					if (considerSeparator) {
+						String[] subsystemNames = subsystemName.split(Pattern.quote(separator));
+						allSubsystemNames.addAll(Arrays.asList(subsystemNames));
+					} else {
+						allSubsystemNames.add(subsystemName);
+					}
 				}
-
 			}
 		}
 
@@ -239,32 +225,27 @@ public abstract class MMDecompositionAlgorithm {
 		}
 
 		for (Node reactionNode : baseGraph.getReactionNodes()) {
-			String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
-			if (subsystemName != "") {
-				String[] subsystemNames;
-				if (considerSeparator) {
-					subsystemNames = subsystemName.split(Pattern.quote(separator));
-				} else {
-					subsystemNames = new String[1];
-					subsystemNames[0] = subsystemName;
-				}
-				for (String currentSubsystemName : subsystemNames) {
-					subsystemMap.get(currentSubsystemName).addReaction(reactionNode);
-					for (Edge incidentEdge : reactionNode.getEdges()) {
-						// if (incidentEdge.isDirected()) {
-						subsystemMap.get(currentSubsystemName).addEdge(incidentEdge);
-						if (incidentEdge.getSource() == reactionNode) {
-							subsystemMap.get(currentSubsystemName).addSpecies(incidentEdge.getTarget());
-						} else {
-							subsystemMap.get(currentSubsystemName).addSpecies(incidentEdge.getSource());
-						}
-						// }
+			if (!alreadyClassifiedNodes.contains(reactionNode)) {
+				String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
+				if (subsystemName != "") {
+					String[] subsystemNames;
+					if (considerSeparator) {
+						subsystemNames = subsystemName.split(Pattern.quote(separator));
+					} else {
+						subsystemNames = new String[1];
+						subsystemNames[0] = subsystemName;
 					}
-
-					// for (Node speciesNode : reactionNode.getNeighbors()) {
-					// subsystemMap.get(currentSubsystemName).addSpecies(speciesNode);
-					// }
-
+					for (String currentSubsystemName : subsystemNames) {
+						subsystemMap.get(currentSubsystemName).addReaction(reactionNode);
+						for (Edge incidentEdge : reactionNode.getEdges()) {
+							subsystemMap.get(currentSubsystemName).addEdge(incidentEdge);
+							if (incidentEdge.getSource() == reactionNode) {
+								subsystemMap.get(currentSubsystemName).addSpecies(incidentEdge.getTarget());
+							} else {
+								subsystemMap.get(currentSubsystemName).addSpecies(incidentEdge.getSource());
+							}
+						}
+					}
 				}
 			}
 		}

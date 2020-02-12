@@ -34,14 +34,11 @@ public class PredefinedMMDecomposition extends MMDecompositionAlgorithm {
 	 * 
 	 * @return
 	 */
-	protected ArrayList<SubsystemGraph> runSpecific() {
+	protected ArrayList<SubsystemGraph> runSpecific(HashSet<Node> alreadyClassifiedNodes) {
 
 		MMETools.getInstance().readNotes(this.getSelectedTag(), this.ATTRIBUTE_NAME);
 
-		return determineSubsystemsFromReactionAttributes(this.ATTRIBUTE_NAME, false, "");
-
-		// initialise subsystem with empty lists, then
-		// successively add species and reactions.
+		return determineSubsystemsFromReactionAttributes(this.ATTRIBUTE_NAME, false, "", alreadyClassifiedNodes);
 
 	}
 

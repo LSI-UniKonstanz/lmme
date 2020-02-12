@@ -3,6 +3,7 @@ package org.vanted.addons.mme.decomposition;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.regex.Pattern;
 
@@ -70,7 +71,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 	}
 
 	@Override
-	protected ArrayList<SubsystemGraph> runSpecific() {
+	protected ArrayList<SubsystemGraph> runSpecific(HashSet<Node> alreadyClassifiedNodes) {
 
 		MMETools.getInstance().readNotes(this.getSelectedTag(), this.ATTRIBUTE_NAME_KEGG_ID);
 
@@ -86,7 +87,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 			extractNodesFromHugestSubsystem();
 		}
 
-		return determineSubsystemsFromReactionAttributes(ATTRIBUTE_NAME_FINAL_SUBSYSTEM, false, "");
+		return determineSubsystemsFromReactionAttributes(ATTRIBUTE_NAME_FINAL_SUBSYSTEM, false, "", alreadyClassifiedNodes);
 	}
 
 	/**
