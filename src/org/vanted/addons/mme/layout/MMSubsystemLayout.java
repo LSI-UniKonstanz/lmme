@@ -4,7 +4,7 @@ import org.graffiti.graph.Graph;
 
 public interface MMSubsystemLayout {
 
-	public void layOut(Graph graph);
+	public void layOutAsSubsystems(Graph graph);
 	
 	public String getName();
 	

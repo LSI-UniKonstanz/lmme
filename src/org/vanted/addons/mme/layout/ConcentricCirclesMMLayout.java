@@ -18,7 +18,7 @@ public class ConcentricCirclesMMLayout implements MMSubsystemLayout {
 	}
 	
 	@Override
-	public void layOut(Graph graph) {
+	public void layOutAsSubsystems(Graph graph) {
 		
 		ArrayList<Node> species = new ArrayList<>();
 		ArrayList<Node> reactions = new ArrayList<>();

@@ -16,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultStyledDocument;
 import javax.wsdl.OperationType;
 
@@ -179,14 +180,27 @@ public class MMEController {
 				MMEViewManagement.getInstance().closeFrames();
 				partiallyResetSession();
 			}
-			MMDecomposition decomposition = this.decompositionAlgorithmsMap.get(this.tab.getDecompositionMethod()).run(
-					this.tab.getAddTransporterSubS());
-			this.currentSession.setOverviewGraph(new OverviewGraph(decomposition));
-			MMEViewManagement.getInstance().showAsOverviewGraph(this.currentSession.getOverviewGraph().getGraph());
-			this.overviewLayoutsMap.get(this.tab.getOverviewLayoutMethod())
-					.layOut(MMEViewManagement.getInstance().getOverviewFrame().getView().getGraph());
-			MMESubsystemViewManagement.getInstance().resetLists();
-			this.tab.setLblNumberOfSubsystems(decomposition.getSubsystems().size());
+
+			Thread decompositionThread = new Thread(new Runnable() {
+				public void run() {
+					MMDecomposition decomposition = decompositionAlgorithmsMap.get(tab.getDecompositionMethod())
+							.run(tab.getAddTransporterSubS());
+					currentSession.setOverviewGraph(new OverviewGraph(decomposition));
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							MMEViewManagement.getInstance()
+									.showAsOverviewGraph(currentSession.getOverviewGraph().getGraph());
+							overviewLayoutsMap.get(tab.getOverviewLayoutMethod()).layOutAsOverview(
+									MMEViewManagement.getInstance().getOverviewFrame().getView().getGraph());
+							MMESubsystemViewManagement.getInstance().resetLists();
+							tab.setLblNumberOfSubsystems(decomposition.getSubsystems().size());
+						}
+					});
+				}
+			});
+			decompositionThread.setName("Decomposition");
+//			keggRequestThread.setPriority(Thread.MIN_PRIORITY);
+			decompositionThread.start();
 		} else {
 			JOptionPane.showMessageDialog(null, "No base graph was set.");
 			return;
@@ -200,7 +214,7 @@ public class MMEController {
 			MMESubsystemViewManagement.getInstance().showSubsystems(selectedSubsystems,
 					this.tab.getClearSubsystemView(), this.tab.getCkbUseColorMapping());
 			this.subsystemLayoutsMap.get(this.tab.getSubsystemLayoutMethod())
-					.layOut(MMEViewManagement.getInstance().getSubsystemFrame().getView().getGraph());
+					.layOutAsSubsystems(MMEViewManagement.getInstance().getSubsystemFrame().getView().getGraph());
 		} else {
 			JOptionPane.showMessageDialog(null, "There are no subsystems selected in the overview graph.");
 			return;
@@ -236,7 +250,8 @@ public class MMEController {
 			GraphHelper.issueCompleteRedrawForActiveView();
 
 		} catch (ClassNotFoundException e) {
-			JOptionPane.showMessageDialog(null, "Could not find SBGN-ED Add-on. Please make sure that it is installed before using this function.");
+			JOptionPane.showMessageDialog(null,
+					"Could not find SBGN-ED Add-on. Please make sure that it is installed before using this function.");
 		} catch (NoSuchMethodException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -267,6 +282,10 @@ public class MMEController {
 	public void partiallyResetSession() {
 		Graph originalGraph = currentSession.getBaseGraph().getOriginalGraph();
 		currentSession = new MMESession(new BaseGraph(originalGraph));
-		this.tab.updateGUI();
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				tab.updateGUI();
+			}
+		});
 	}
 }
