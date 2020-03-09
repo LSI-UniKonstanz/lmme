@@ -4,7 +4,7 @@ import org.graffiti.graph.Graph;
 
 public interface MMOverviewLayout {
 
-	public void layOut(Graph graph);
+	public void layOutAsOverview(Graph graph);
 	
 	public String getName();
 

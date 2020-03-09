@@ -64,6 +64,7 @@ public class MMEViewManagement {
 			}
 		});
 		reArrangeFrames();
+		MMEController.getInstance().getCurrentSession().getOverviewGraph().registerSelectionListener();
 	}
 	
 	public void showAsSubsystemGraph(Graph graph) {
@@ -72,7 +73,8 @@ public class MMEViewManagement {
 		subsystemFrame.addInternalFrameListener(new InternalFrameAdapter() {
 			public void internalFrameClosing(InternalFrameEvent e) {
 				MMEController.getInstance().getTab().resetSubsystemInfo();
-				MMESubsystemViewManagement.getInstance().resetLists();
+				MMESubsystemViewManagement.getInstance().resetOverviewGraphColoring();
+//				MMESubsystemViewManagement.getInstance().resetLists();
 			}
 		});
 		reArrangeFrames();
@@ -124,6 +126,14 @@ public class MMEViewManagement {
 	 */
 	public GraffitiInternalFrame getSubsystemFrame() {
 		return subsystemFrame;
+	}
+	
+	public void ensureOverviewActive() {
+		MainFrame.getInstance().setActiveSession(overviewFrame.getSession(), overviewFrame.getView());
+	}
+	
+	public void ensureSubsystemViewActive() {
+		MainFrame.getInstance().setActiveSession(subsystemFrame.getSession(), subsystemFrame.getView());
 	}
 	
 	public void closeFrames() {

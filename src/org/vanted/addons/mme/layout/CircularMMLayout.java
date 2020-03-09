@@ -24,7 +24,7 @@ public class CircularMMLayout implements MMOverviewLayout {
 	/**
 	 * 
 	 */
-	public void layOut(Graph graph) {
+	public void layOutAsOverview(Graph graph) {
 
 		ArrayList<Node> layer1 = new ArrayList<>();
 		ArrayList<Node> layer2 = new ArrayList<>();

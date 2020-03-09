@@ -34,7 +34,7 @@ public class MMESession {
 	// private GsmmSubsystemLayout subsystemLayout;
 
 	public MMESession() {
-
+		
 	}
 
 	public MMESession(BaseGraph baseGraph) {

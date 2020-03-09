@@ -14,11 +14,15 @@ import org.graffiti.graph.AdjListGraph;
 import org.graffiti.graph.Edge;
 import org.graffiti.graph.Graph;
 import org.graffiti.graph.Node;
+import org.graffiti.plugins.inspectors.defaults.DefaultEditPanel;
+import org.graffiti.selection.SelectionEvent;
+import org.graffiti.selection.SelectionListener;
 import org.graffiti.selection.SelectionModel;
 import org.graffiti.session.EditorSession;
 import org.vanted.addons.mme.core.MMEController;
 import org.vanted.addons.mme.decomposition.MMDecomposition;
 import org.vanted.addons.mme.ui.MMETab;
+import org.vanted.addons.mme.ui.MMEViewManagement;
 
 public class OverviewGraph {
 
@@ -45,6 +49,12 @@ public class OverviewGraph {
 	 */
 	private HashMap<SubsystemGraph, Node> subsystemToNodeMap;
 
+	/**
+	 * A map that maps en edge to the interfaces between the corresponding
+	 * subsystems.
+	 */
+	private HashMap<Edge, ArrayList<Node>> edgeToInterfacesMap;
+
 	public OverviewGraph(Graph graph) {
 		// this.graph = graph;
 		// determineInterfaces();
@@ -53,6 +63,7 @@ public class OverviewGraph {
 	public OverviewGraph(MMDecomposition decomposition) {
 		this.nodeToSubsystemMap = new HashMap<>();
 		this.subsystemToNodeMap = new HashMap<>();
+		this.edgeToInterfacesMap = new HashMap<>();
 
 		this.decomposition = decomposition;
 		determineInterfaces();
@@ -84,13 +95,15 @@ public class OverviewGraph {
 					Node targetNode = subsystemToNodeMap.get(subsystem2);
 					Edge addedEdge = graph.addEdge(sourceNode, targetNode, false,
 							AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
-					if (MMEController.getInstance().getTab().getMapToEdgeThickness()) {
-						AttributeHelper.setFrameThickNess(addedEdge,
-								totalInterfaces > 20 ? 20.0 : (double) totalInterfaces);
-					}
+
+					ArrayList<Node> interfaces = new ArrayList<Node>();
+					interfaces.addAll(getInterfaceNodes(subsystem1, subsystem2));
+					interfaces.addAll(getInterfaceNodes(subsystem2, subsystem1));
+					edgeToInterfacesMap.put(addedEdge, interfaces);
 				}
 			}
 		}
+		updateEdgeThickness();
 
 		// TODO: Create graph! Perhaps using determineInterfaces() to achieve it!
 
@@ -134,6 +147,51 @@ public class OverviewGraph {
 		}
 
 		return selectedSubsystems;
+	}
+
+	/**
+	 * This registers a selection listener for the selection information in the
+	 * panel.
+	 */
+	public void registerSelectionListener() {
+		
+		EditorSession editorSession = null;
+		for (EditorSession es : MainFrame.getInstance().getEditorSessions()) {
+			if (es.getGraph() == this.graph) {
+				editorSession = es;
+				break;
+			}
+		}
+		editorSession.getSelectionModel().addSelectionListener(new SelectionListener() {
+			
+			public void selectionListChanged(SelectionEvent e) {
+				// Do nothing.
+			}
+			
+			public void selectionChanged(SelectionEvent e) {
+				Collection<Edge> edges = e.getSelection().getEdges();
+				Collection<Node> nodes = e.getSelection().getNodes();
+				MMETab tab = MMEController.getInstance().getTab();
+				
+				if ((edges.size() == 1) && (nodes.size() == 0)) {
+					Edge edge = edges.iterator().next();
+					ArrayList<String> names = new ArrayList<String>();
+					for (Node interfaceNode : edgeToInterfacesMap.get(edge)) {
+						names.add(AttributeHelper.getLabel(interfaceNode, ""));
+					}
+					tab.showSelectedEdgeInfo(nodeToSubsystemMap.get(edge.getSource()).getName(), nodeToSubsystemMap.get(edge.getTarget()).getName(), names);
+				} else if ((nodes.size() == 1) && (edges.size() == 0)) {
+					Node node = nodes.iterator().next();
+					SubsystemGraph subsystem = nodeToSubsystemMap.get(node);
+					tab.showSelectedSubsystemInfo(subsystem.getName(), subsystem.getNumberOfSpecies(), subsystem.getNumberOfReactions());
+				} else {
+					tab.resetSelectionInfo();
+				}
+			}
+		});
+		
+		
+		
 	}
 
 	/**
@@ -196,6 +254,31 @@ public class OverviewGraph {
 
 	public MMDecomposition getDecomposition() {
 		return decomposition;
+	}
+
+	/**
+	 * Updates the edge thicknesses in the overview graph according to the user
+	 * settings in the tab.
+	 */
+	public void updateEdgeThickness() {
+		for (Edge edge : graph.getEdges()) {
+			if (MMEController.getInstance().getTab().getDrawEdges()) {
+				if (MMEController.getInstance().getTab().getMapToEdgeThickness()) {
+					int totalInterfaces = edgeToInterfacesMap.get(edge).size();
+					AttributeHelper.setFrameThickNess(edge, totalInterfaces > 20 ? 20.0 : (double) totalInterfaces);
+				} else {
+					AttributeHelper.setFrameThickNess(edge, 1.0);
+				}
+			} else {
+				AttributeHelper.setFrameThickNess(edge, -1.0);
+			}
+		}
+
+		if (MMEViewManagement.getInstance().getOverviewFrame() != null) {
+			DefaultEditPanel.issueCompleteRedrawForView(MMEViewManagement.getInstance().getOverviewFrame().getView(),
+					MMEViewManagement.getInstance().getOverviewFrame().getView().getGraph());
+		}
+
 	}
 
 }

@@ -11,19 +11,17 @@ import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.ws.rs.core.MediaType;
 
-import org.BackgroundTaskStatusProvider;
 import org.FolderPanel;
 import org.GuiRow;
 import org.SystemInfo;
-import org.codehaus.stax2.evt.NotationDeclaration2;
 import org.graffiti.editor.MainFrame;
 import org.graffiti.editor.MessageType;
 import org.graffiti.graph.Node;
@@ -34,16 +32,16 @@ import org.vanted.addons.mme.core.MMETools;
 import org.vanted.addons.mme.graphs.SubsystemGraph;
 import org.vanted.addons.mme.ui.MMETab;
 
-import de.ipk_gatersleben.ag_nw.graffiti.services.task.BackgroundTaskHelper;
+import de.ipk_gatersleben.ag_nw.graffiti.NeedsSwingThread;
 import de.ipk_gatersleben.ag_nw.graffiti.services.web.RestService;
 import info.clearthought.layout.TableLayout;
 
-public class KeggMMDecomposition extends MMDecompositionAlgorithm {
+public class KeggMMDecomposition extends MMDecompositionAlgorithm implements NeedsSwingThread {
 
 	private JComboBox<String> cbTag;
 	private GuiRow tagRow;
 	private FolderPanel fp;
-	
+
 	private JTextField separator;
 	private JLabel minimumNumberValue;
 	private JSlider minimumNumberSlider;
@@ -77,9 +75,6 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 
 		request();
 
-		// BackgroundTaskHelper.issueSimpleTask("Request from Kegg", "", this, null,
-		// this);
-
 		while (!this.node2possibleSubsystems.isEmpty()) {
 			updateSubsystemNumber();
 			removeTooSmallSubsystems();
@@ -87,7 +82,8 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 			extractNodesFromHugestSubsystem();
 		}
 
-		return determineSubsystemsFromReactionAttributes(ATTRIBUTE_NAME_FINAL_SUBSYSTEM, false, "", alreadyClassifiedNodes);
+		return determineSubsystemsFromReactionAttributes(ATTRIBUTE_NAME_FINAL_SUBSYSTEM, false, "",
+				alreadyClassifiedNodes);
 	}
 
 	/**
@@ -123,7 +119,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 				requestAndProcessPackageSeparately(reactionPackage);
 			}
 			this.packageStart += 10;
-			MainFrame.showMessage("Requested " + this.packageStart + " reactions from Kegg so far.",
+			MainFrame.showMessage("So far " + packageStart + " reactions have been queried from Kegg.",
 					MessageType.PERMANENT_INFO);
 		}
 		reactionPackage = new ArrayList<>();
@@ -144,8 +140,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 	 * This method sends HTTP requests to KEGG for a whole package of up to 10
 	 * reactions.
 	 * 
-	 * @param reactionPackage
-	 *            The package of reaction nodes to be requested
+	 * @param reactionPackage The package of reaction nodes to be requested
 	 * @return a list of request result Strings
 	 */
 	private String[] requestPackage(ArrayList<Node> reactionPackage) {
@@ -177,10 +172,8 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 	 * a list of reactions and a list of request result Strings, that match position
 	 * by position. This method assumes both lists to have the same length.
 	 * 
-	 * @param reactionNodes
-	 *            The nodes that have been requested
-	 * @param requestResults
-	 *            The results from the request
+	 * @param reactionNodes  The nodes that have been requested
+	 * @param requestResults The results from the request
 	 */
 	private void processPackageResults(ArrayList<Node> reactionNodes, String[] requestResults) {
 		for (int i = 0; i < reactionNodes.size(); i++) {
@@ -198,9 +191,8 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 	 * of {@link requestPackage} such that list sizes do not match or if a reaction
 	 * has had assigned more than one KEGG id.
 	 * 
-	 * @param reactionPackage
-	 *            A list of reaction nodes that will be requested and directly
-	 *            processed.
+	 * @param reactionPackage A list of reaction nodes that will be requested and
+	 *                        directly processed.
 	 */
 	private void requestAndProcessPackageSeparately(ArrayList<Node> reactionPackage) {
 		for (Node reactionNode : reactionPackage) {
@@ -347,7 +339,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 	 */
 	@Override
 	public FolderPanel getFolderPanel() {
-		
+
 		if (this.fp != null) {
 			updateFolderPanel();
 		} else {
@@ -401,14 +393,14 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 		}
 		return fp;
 	}
-	
+
 	public void updateFolderPanel() {
 		this.cbTag = createComboBox();
 		JPanel tagLine = MMETab.combine(new JLabel("SBML Tag:"), this.cbTag, Color.WHITE, false, true);
 		this.tagRow.left = tagLine;
 		this.fp.layoutRows();
 	}
-	
+
 	private JComboBox<String> createComboBox() {
 		JComboBox<String> cb;
 		if (MMEController.getInstance().getCurrentSession().isModelSet()) {
@@ -424,7 +416,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm {
 		}
 		return cb;
 	}
-	
+
 	private String getSelectedTag() {
 		return (String) this.cbTag.getSelectedItem();
 	}

@@ -61,6 +61,21 @@ public class MMETab extends InspectorTab {
 	private JLabel lblSessionInfoReactions;
 	private JLabel lblSessionInfoSubsystems;
 
+	private JPanel panelSelectionInformation;
+
+	private JPanel panelSelectedSubsystemInfo;
+	private JLabel lblNameOfSelectedSubsystem;
+	private JLabel lblNumberMetabolitesOfSelectedSubsystem;
+	private JLabel lblNumberReactionsOfSelectedSubsystem;
+
+	private JPanel panelSelectedEdgeInfo;
+	private JScrollPane scrollPaneSelectedEdgeInfo;
+	private JPanel interfaceListPanel;
+	private JLabel lblNameSubsystem1OfSelectedEdge;
+	private JLabel lblNameSubsystem2OfSelectedEdge;
+	
+	private JPanel panelNoSelection;
+
 	private JLabel lblSubsystemInfoSubsystems;
 	private JLabel lblSubsystemInfoMetabolites;
 	private JLabel lblSubsystemInfoReactions;
@@ -70,6 +85,7 @@ public class MMETab extends InspectorTab {
 	private JScrollPane monitorScrollPane;
 
 	private JCheckBox ckbMapToEdgeThickness;
+	private JCheckBox ckbDrawEdges;
 	private JCheckBox ckbAddTransporterSubS;
 
 	private JComboBox<String> cbDecompMethod;
@@ -105,39 +121,85 @@ public class MMETab extends InspectorTab {
 				{ 5.0, TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
+						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM } }));
 		mainPanel.setBackground(Color.WHITE);
+
+		int rowCount = 1;
 
 		JButton btnSetModel = new JButton("Set model");
 		btnSetModel.setToolTipText(
 				"Sets the model from the currently active view as the base graph for the decomposition.");
-		mainPanel.add(btnSetModel, "0,1");
+		mainPanel.add(btnSetModel, "0," + rowCount);
+		rowCount += 2;
 		btnSetModel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				MMEController.getInstance().setModelAction();
 			}
 		});
 
-		mainPanel.add(createSessionInformationComponent(), "0,3");
+		mainPanel.add(createSessionInformationComponent(), "0," + rowCount);
+		rowCount += 2;
 
-		mainPanel.add(createSettingsComponent(), "0,5");
+		mainPanel.add(createSettingsComponent(), "0," + rowCount);
+		rowCount += 2;
 
 		JButton btnShowOverviewGraph = new JButton("Show Overview Graph");
 		btnShowOverviewGraph
 				.setToolTipText("Runs the decomposition on the base graph and shows the resulting overview graph.");
-		mainPanel.add(btnShowOverviewGraph, "0,7");
+		mainPanel.add(btnShowOverviewGraph, "0," + rowCount);
+		rowCount += 2;
 		btnShowOverviewGraph.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				MMEController.getInstance().showOverviewGraphAction();
 			}
 		});
 
-		mainPanel.add(createSubsystemsViewComponent(), "0,9");
+		this.ckbDrawEdges = new JCheckBox("Show edges in overview graph");
+		this.ckbDrawEdges
+				.setToolTipText("<html>If deselected, only the subsystem nodes will be drawn without edges</html>");
+		this.ckbDrawEdges.setBackground(Color.WHITE);
+		mainPanel.add(this.ckbDrawEdges, "0," + rowCount);
+		rowCount += 2;
+		this.ckbDrawEdges.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				if (MMEController.getInstance().getCurrentSession().isOverviewGraphConstructed()) {
+					MMEController.getInstance().getCurrentSession().getOverviewGraph().updateEdgeThickness();
+				}
+			}
+		});
+		this.ckbDrawEdges.setSelected(true);
+		this.ckbDrawEdges.setRolloverEnabled(false);
+
+		this.ckbMapToEdgeThickness = new JCheckBox("Map number of interfaces to edge thickness");
+		this.ckbMapToEdgeThickness.setToolTipText(
+				"<html>The edge thickness in the overview graph will be proportional to<br>the number of interface metabolites between the respective subsystems</html>");
+		this.ckbMapToEdgeThickness.setBackground(Color.WHITE);
+		mainPanel.add(this.ckbMapToEdgeThickness, "0," + rowCount);
+		rowCount += 2;
+		this.ckbMapToEdgeThickness.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if (MMEController.getInstance().getCurrentSession().isOverviewGraphConstructed()) {
+					MMEController.getInstance().getCurrentSession().getOverviewGraph().updateEdgeThickness();
+				}
+			}
+		});
+
+//		this.ckbMapToEdgeThickness.addChangeListener(new ChangeListener() {
+//			public void stateChanged(ChangeEvent e) {
+//				
+//			}
+//		});
+		this.ckbMapToEdgeThickness.setSelected(false);
+
+		mainPanel.add(createSubsystemsViewComponent(), "0," + rowCount);
+		rowCount += 2;
 
 		JButton btnShowSubsystems = new JButton("Show selected subsystems");
 		btnShowSubsystems.setToolTipText("Shows the expanded versions of the currently selected subsystems "
 				+ "from the left window in the right window.");
-		mainPanel.add(btnShowSubsystems, "0,11");
+		mainPanel.add(btnShowSubsystems, "0," + rowCount);
+		rowCount += 2;
 		btnShowSubsystems.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				MMEController.getInstance().showSubsystemGraphsAction();
@@ -146,7 +208,8 @@ public class MMETab extends InspectorTab {
 
 		JButton btnTransformToSbgn = new JButton("Transform to SBGN");
 		btnTransformToSbgn.setToolTipText("Transforms the subsystem view to SBGN representation.");
-		mainPanel.add(btnTransformToSbgn, "0,13");
+		mainPanel.add(btnTransformToSbgn, "0," + rowCount);
+		rowCount += 2;
 		btnTransformToSbgn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				MMEController.getInstance().transformToSbgnAction();
@@ -166,23 +229,26 @@ public class MMETab extends InspectorTab {
 
 		JPanel sessionInfoPanel = new JPanel();
 
-		sessionInfoPanel.setLayout(new TableLayout(new double[][] {
-				{ TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM }, { TableLayoutConstants.MINIMUM,
-						TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM } }));
+		sessionInfoPanel.setLayout(
+				new TableLayout(new double[][] { { TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM },
+						{ TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM,
+								TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM } }));
 
 		this.lblSessionInfoBaseGraph = new JLabel("");
 		this.lblSessionInfoMetabolites = new JLabel("");
 		this.lblSessionInfoReactions = new JLabel("");
 		this.lblSessionInfoSubsystems = new JLabel("");
 
-		sessionInfoPanel.add(new JLabel("Base Graph:"), "0,0");
-		sessionInfoPanel.add(this.lblSessionInfoBaseGraph, "1,0");
-		sessionInfoPanel.add(new JLabel("Metabolites:"), "0,1");
-		sessionInfoPanel.add(this.lblSessionInfoMetabolites, "1,1");
-		sessionInfoPanel.add(new JLabel("Reactions:"), "0,2");
-		sessionInfoPanel.add(this.lblSessionInfoReactions, "1,2");
-		sessionInfoPanel.add(new JLabel("Subsystems:"), "0,3");
-		sessionInfoPanel.add(this.lblSessionInfoSubsystems, "1,3");
+		sessionInfoPanel.add(new JLabel("<html><u>General</u></html>"), "0,0");
+		
+		sessionInfoPanel.add(new JLabel("Base Graph: "), "0,1");
+		sessionInfoPanel.add(this.lblSessionInfoBaseGraph, "1,1");
+		sessionInfoPanel.add(new JLabel("Metabolites: "), "0,2");
+		sessionInfoPanel.add(this.lblSessionInfoMetabolites, "1,2");
+		sessionInfoPanel.add(new JLabel("Reactions: "), "0,3");
+		sessionInfoPanel.add(this.lblSessionInfoReactions, "1,3");
+		sessionInfoPanel.add(new JLabel("Subsystems: "), "0,4");
+		sessionInfoPanel.add(this.lblSessionInfoSubsystems, "1,4");
 		sessionInfoPanel.setBackground(Color.WHITE);
 
 		JPanel monitorOuterPanel = new JPanel();
@@ -195,10 +261,100 @@ public class MMETab extends InspectorTab {
 		this.monitorScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		monitorOuterPanel.add(this.monitorScrollPane, "0,0");
 
-		// addOneElementSpanning(monitorOuterPanel, fpSessionInfo);
-		fpSessionInfo.addGuiComponentRow(FolderPanel.getBorderedComponent(sessionInfoPanel, 2, 0, 0, 0), null, true);
-
+		JPanel infoPanel = new JPanel();
+		infoPanel.setLayout(new TableLayout(new double[][] { { TableLayoutConstants.MINIMUM, 10.0, 1.0, 10.0, TableLayoutConstants.FILL },
+				{ TableLayoutConstants.MINIMUM } }));
+		
+		infoPanel.add(sessionInfoPanel, "0,0");
+		JPanel separatorPanel = new JPanel();
+		separatorPanel.setBackground(Color.BLACK);
+		infoPanel.add(separatorPanel, "2,0");
+		
+		instantiateSelectionInformationPanel();
+		infoPanel.add(this.panelSelectionInformation, "4,0");
+		infoPanel.setBackground(Color.WHITE);
+		addOneElementSpanning(FolderPanel.getBorderedComponent(infoPanel, 2, 0, 0, 0), fpSessionInfo);
+//		fpSessionInfo.addGuiComponentRow(FolderPanel.getBorderedComponent(infoPanel, 2, 0, 0, 0), null, true);
+		
 		return fpSessionInfo;
+	}
+
+	/**
+	 * Instantiates the selection information panel and all necessary instance
+	 * variables needed later on.
+	 */
+	private void instantiateSelectionInformationPanel() {
+
+		this.panelSelectionInformation = new JPanel();
+		this.panelSelectionInformation.setBackground(Color.WHITE);
+		
+		this.panelSelectionInformation.setLayout(
+				new TableLayout(new double[][] { { TableLayoutConstants.FILL }, { TableLayoutConstants.MINIMUM } }));
+
+		this.panelSelectedSubsystemInfo = new JPanel();
+		this.panelSelectedSubsystemInfo.setLayout(new TableLayout(new double[][] {
+				{ TableLayoutConstants.MINIMUM }, { TableLayoutConstants.MINIMUM,
+						TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM } }));
+
+		this.lblNameOfSelectedSubsystem = new JLabel("");
+		this.lblNumberMetabolitesOfSelectedSubsystem = new JLabel("");
+		this.lblNumberReactionsOfSelectedSubsystem = new JLabel("");
+
+		this.panelSelectedSubsystemInfo.add(new JLabel("<html><u>Selected&nbsp;Subsystem</u></html>"), "0,0");
+		this.panelSelectedSubsystemInfo.add(this.lblNameOfSelectedSubsystem, "0,1");
+		this.panelSelectedSubsystemInfo.add(this.lblNumberMetabolitesOfSelectedSubsystem, "0,2");
+		this.panelSelectedSubsystemInfo.add(this.lblNumberReactionsOfSelectedSubsystem, "0,3");
+		this.panelSelectedSubsystemInfo.setBackground(Color.WHITE);
+
+		this.panelSelectedEdgeInfo = new JPanel();
+		this.panelSelectedEdgeInfo.setLayout(new TableLayout(new double[][] {
+			{TableLayoutConstants.PREFERRED}, {TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, 3.0, TableLayoutConstants.MINIMUM,  50.0}
+		}));
+		this.panelSelectedEdgeInfo.setBackground(Color.WHITE);
+		
+		
+//		JPanel labelPanelSelectedEdgeInfo = new JPanel();
+//		labelPanelSelectedEdgeInfo.setLayout(new TableLayout(new double[][] {
+//			{TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM}, {TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM}
+//		}));
+		
+		this.lblNameSubsystem1OfSelectedEdge = new JLabel("");
+		this.lblNameSubsystem2OfSelectedEdge = new JLabel("");
+		
+		this.panelSelectedEdgeInfo.add(new JLabel("<html><u>Selected&nbsp;Edge</u></html>"), "0,0");
+		this.panelSelectedEdgeInfo.add(new JLabel("Involved subsystems:"), "0,1");
+//		labelPanelSelectedEdgeInfo.add(new JLabel("Subsystem 1: "), "0,1");
+		this.panelSelectedEdgeInfo.add(this.lblNameSubsystem1OfSelectedEdge, "0,2");
+//		labelPanelSelectedEdgeInfo.add(new JLabel("Subsystem 2: "), "0,2");
+		this.panelSelectedEdgeInfo.add(this.lblNameSubsystem2OfSelectedEdge, "0,3");
+//		labelPanelSelectedEdgeInfo.setBackground(Color.WHITE);
+		this.panelSelectedEdgeInfo.add(new JLabel("Corresponding Interfaces:"), "0,5");
+		
+		
+		this.interfaceListPanel = new JPanel();
+		this.scrollPaneSelectedEdgeInfo = new JScrollPane(this.interfaceListPanel,
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		
+//		this.panelSelectedEdgeInfo.add(labelPanelSelectedEdgeInfo, "0,0");
+		this.panelSelectedEdgeInfo.add(this.scrollPaneSelectedEdgeInfo, "0,6");
+		
+		this.panelNoSelection = new JPanel();
+		this.panelNoSelection.setLayout(new TableLayout(new double[][] {
+			{TableLayoutConstants.PREFERRED}, {TableLayoutConstants.MINIMUM}
+		}));
+		this.panelNoSelection.add(new JLabel("<html>Select a single edge or a single<br> node in the overview graph.</html>"), "0,0");
+		this.panelNoSelection.setBackground(Color.WHITE);
+		
+		this.panelSelectionInformation.add(this.panelNoSelection, "0,0");
+
+		// instantiate panel
+		// instantiate edge info panel
+		// edge info scroll pane
+		// edge info list panel
+		// edge info 2 lbls
+		// instantiate subs info panel
+		// subs info 3blbs
+
 	}
 
 	/**
@@ -225,7 +381,7 @@ public class MMETab extends InspectorTab {
 		GuiRow cloningRow = new GuiRow(dummyLabel, null);
 		cloningRow.span = true;
 		fpSettings.addGuiComponentRow(cloningRow, true);
-		
+
 		GuiRow specificDecompSettingsRow = new GuiRow(new JLabel(""), null);
 		specificDecompSettingsRow.span = true;
 		fpSettings.addGuiComponentRow(specificDecompSettingsRow, true);
@@ -255,12 +411,6 @@ public class MMETab extends InspectorTab {
 				.setToolTipText("Constructs another subsystem that consists of all transport reactions.");
 		this.ckbAddTransporterSubS.setBackground(Color.WHITE);
 		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbAddTransporterSubS, 0, 0, 0, 0), null, true);
-
-		this.ckbMapToEdgeThickness = new JCheckBox("Map subsystem connectivity to edge thickness");
-		this.ckbMapToEdgeThickness.setToolTipText(
-				"<html>The edge thickness in the overview graph will be proportional to<br>the number of interface metabolites between the respective subsystems</html>");
-		this.ckbMapToEdgeThickness.setBackground(Color.WHITE);
-		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbMapToEdgeThickness, 0, 0, 0, 0), null, true);
 
 // Snippet might be useful in the future
 //		ckbAddDefaultSubS.addItemListener(new ItemListener() {
@@ -481,6 +631,80 @@ public class MMETab extends InspectorTab {
 	}
 
 	/**
+	 * Updates the selection info at the top of the tab. The subsystems names will
+	 * be shown as labels, while the interface names will be shown as scrollable
+	 * list.
+	 * 
+	 * @param subsystem1     The name of the first subsystem
+	 * @param subsystem2     The name of the secons subsystem
+	 * @param interfaceNames The interface names to be shown in a scrollable list
+	 */
+	public void showSelectedEdgeInfo(String subsystem1, String subsystem2, ArrayList<String> interfaceNames) {
+		this.panelSelectionInformation.removeAll();
+		
+		String name1ToShow = subsystem1.length() > 25 ? subsystem1.substring(0, 24) + "..." : subsystem1;
+		String name2ToShow = subsystem2.length() > 25 ? subsystem2.substring(0, 24) + "..." : subsystem2;
+		
+		this.lblNameSubsystem1OfSelectedEdge.setText("- " + name1ToShow);
+		this.lblNameSubsystem2OfSelectedEdge.setText("- " + name2ToShow);
+		
+		this.interfaceListPanel.removeAll();
+		double[] rows = new double[interfaceNames.size()];
+		for (int i = 0; i < rows.length; i++) {
+			rows[i] = TableLayoutConstants.MINIMUM;
+		}
+		this.interfaceListPanel.setLayout(new TableLayout(new double[][] {
+			{TableLayoutConstants.FILL}, rows
+		}));
+		
+		for (int i = 0; i < interfaceNames.size(); i++) {
+//			String labelToShow = interfaceNames.get(i).length() > 25 ? interfaceNames.get(i).substring(0, 24) + "..." : interfaceNames.get(i);
+			JLabel lbl = new JLabel(interfaceNames.get(i));
+			interfaceListPanel.add(lbl, "0," + i);
+		}
+		
+		this.panelSelectionInformation.add(this.panelSelectedEdgeInfo, "0,0");
+		this.panelSelectionInformation.revalidate();
+		this.panelSelectionInformation.repaint();
+		// Labels
+		// Panel nehmen und layout einstellen
+		//LAbels einfuegen, fertig.
+		// testen.
+	}
+
+	/**
+	 * Resets the selection info. needs to be called when no or more than one
+	 * entities are selected.
+	 */
+	public void resetSelectionInfo() {
+		this.panelSelectionInformation.removeAll();
+		this.panelSelectionInformation.add(this.panelNoSelection, "0,0");
+		this.panelSelectionInformation.revalidate();
+		this.panelSelectionInformation.repaint();
+	}
+
+	/**
+	 * Updates the selection info at the top of the tab. all information will be
+	 * shown as labels.
+	 * 
+	 * @param subsystemName
+	 * @param numberOfMetabolites
+	 * @param numberOfReactions
+	 */
+	public void showSelectedSubsystemInfo(String subsystemName, int numberOfMetabolites, int numberOfReactions) {
+		this.panelSelectionInformation.removeAll();
+		
+		String nameToShow = subsystemName.length() > 25 ? subsystemName.substring(0, 24) + "..." : subsystemName;
+		this.lblNameOfSelectedSubsystem.setText(nameToShow);
+		this.lblNumberMetabolitesOfSelectedSubsystem.setText(Integer.toString(numberOfMetabolites) + " Metabolites");
+		this.lblNumberReactionsOfSelectedSubsystem.setText(Integer.toString(numberOfReactions) + " Reactions");
+		
+		this.panelSelectionInformation.add(this.panelSelectedSubsystemInfo, "0,0");
+		this.panelSelectionInformation.revalidate();
+		this.panelSelectionInformation.repaint();
+	}
+
+	/**
 	 * Sets the corresponding labels in the subsystem information panel.
 	 * 
 	 * @param numberOfSubsystems
@@ -510,7 +734,7 @@ public class MMETab extends InspectorTab {
 	 * @param numberOfReactions
 	 */
 	public void setBaseGraphInfo(String name, int numberOfMetabolites, int numberOfReactions) {
-		String nameToShow = name.length() > 40 ? name.substring(0, 39) + "..." : name;
+		String nameToShow = name.length() > 25 ? name.substring(0, 24) + "..." : name;
 		this.lblSessionInfoBaseGraph.setText(nameToShow);
 		this.lblSessionInfoMetabolites.setText(Integer.toString(numberOfMetabolites));
 		this.lblSessionInfoReactions.setText(Integer.toString(numberOfReactions));
@@ -572,6 +796,10 @@ public class MMETab extends InspectorTab {
 		return this.ckbMapToEdgeThickness.isSelected();
 	}
 
+	public boolean getDrawEdges() {
+		return this.ckbDrawEdges.isSelected();
+	}
+
 	/**
 	 * @return the ckbAddTransporterSubS
 	 */
@@ -616,7 +844,8 @@ public class MMETab extends InspectorTab {
 
 	/**
 	 * 
-	 * @return the species to be cloned. Species in the returned list are from the originalGraph
+	 * @return the species to be cloned. Species in the returned list are from the
+	 *         originalGraph
 	 */
 	public ArrayList<Node> getClonableSpecies() {
 		ArrayList<Node> res = new ArrayList<>();
@@ -681,7 +910,7 @@ public class MMETab extends InspectorTab {
 	}
 
 	/**
-	 * This emthod adds the given element as a new row into the given FolderPanel in
+	 * This method adds the given element as a new row into the given FolderPanel in
 	 * a way such that it spans the whole row
 	 * 
 	 * @param el    The element to be added.
