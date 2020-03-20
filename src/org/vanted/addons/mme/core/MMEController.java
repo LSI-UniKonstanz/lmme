@@ -5,10 +5,12 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -28,6 +30,7 @@ import org.graffiti.graph.Graph;
 import org.graffiti.plugin.algorithm.Algorithm;
 import org.graffiti.util.InstanceLoader;
 import org.sbml.jsbml.util.SBMLtools;
+import org.vanted.addons.mme.analysis.OverRepresentationAnalysis;
 import org.vanted.addons.mme.decomposition.CompartmentMMDecomposition;
 import org.vanted.addons.mme.decomposition.GirvanMMDecomposition;
 import org.vanted.addons.mme.decomposition.MMDecomposition;
@@ -220,6 +223,22 @@ public class MMEController {
 			return;
 		}
 
+	}
+
+	public void oraAction(String pathToDifferentiallyExpressedFile, String pathToReferenceFile) throws IOException {
+
+		if (this.currentSession.isOverviewGraphConstructed()) {
+			OverRepresentationAnalysis ora = new OverRepresentationAnalysis(pathToDifferentiallyExpressedFile,
+					pathToReferenceFile);
+			HashSet<SubsystemGraph> significantSubsystems = ora.getSignificantSubsystems();
+			MMESubsystemViewManagement.getInstance().resetOverviewGraphColoring();
+			OverviewGraph og = getCurrentSession().getOverviewGraph();
+			for (SubsystemGraph subsystem : significantSubsystems) {
+				AttributeHelper.setFillColor(og.getNodeOfSubsystem(subsystem), Color.RED);
+			}
+		} else {
+			JOptionPane.showMessageDialog(null, "There was no overview graph constructed so far.");
+		}
 	}
 
 	/**

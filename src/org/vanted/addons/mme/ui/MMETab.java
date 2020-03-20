@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Dictionary;
@@ -19,6 +20,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -73,7 +75,7 @@ public class MMETab extends InspectorTab {
 	private JPanel interfaceListPanel;
 	private JLabel lblNameSubsystem1OfSelectedEdge;
 	private JLabel lblNameSubsystem2OfSelectedEdge;
-	
+
 	private JPanel panelNoSelection;
 
 	private JLabel lblSubsystemInfoSubsystems;
@@ -105,8 +107,6 @@ public class MMETab extends InspectorTab {
 	ArrayList<JCheckBox> clonableSpeciesCheckBoxesSubmitted = new ArrayList<>();
 	HashMap<JCheckBox, Node> checkbox2nodeMap = new HashMap<>();
 
-	// private ArrayList<String> clonableSpecies = new ArrayList<>();
-
 	// instance variables end
 
 	public MMETab() {
@@ -122,7 +122,7 @@ public class MMETab extends InspectorTab {
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
-						TableLayoutConstants.MINIMUM } }));
+						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM } }));
 		mainPanel.setBackground(Color.WHITE);
 
 		int rowCount = 1;
@@ -184,13 +184,10 @@ public class MMETab extends InspectorTab {
 				}
 			}
 		});
-
-//		this.ckbMapToEdgeThickness.addChangeListener(new ChangeListener() {
-//			public void stateChanged(ChangeEvent e) {
-//				
-//			}
-//		});
 		this.ckbMapToEdgeThickness.setSelected(false);
+
+		mainPanel.add(instantiateORA(), "0," + rowCount);
+		rowCount += 2;
 
 		mainPanel.add(createSubsystemsViewComponent(), "0," + rowCount);
 		rowCount += 2;
@@ -219,6 +216,97 @@ public class MMETab extends InspectorTab {
 		MMEController.getInstance().setTab(this);
 	}
 
+	private JButton instantiateORA() {
+		String defaultTextForLoadFile = "No file selected.";
+		JTextField tfPathToDifferentiallyExpressedFile = new JTextField(defaultTextForLoadFile);
+		tfPathToDifferentiallyExpressedFile.setEditable(false);
+		JTextField tfPathToReferenceFile = new JTextField(defaultTextForLoadFile);
+		tfPathToReferenceFile.setEditable(false);
+
+		JFrame frameORA = new JFrame("Over-Representation Analysis (ORA)");
+		JPanel panelORA = new JPanel();
+		panelORA.setBackground(Color.WHITE);
+		JButton buttonExecuteORA = new JButton("Execute");
+		frameORA.setLayout(new TableLayout(new double[][] { { TableLayoutConstants.FILL },
+				{ TableLayoutConstants.MINIMUM, TableLayoutConstants.FILL, 30.0 } }));
+		panelORA.setLayout(new TableLayout(new double[][] {
+				{ 10.0, TableLayoutConstants.PREFERRED, 10.0, TableLayoutConstants.FILL, TableLayoutConstants.MINIMUM },
+				{ 30.0, 30.0 } }));
+		panelORA.add(new JLabel("<html><b>Differentially Expressed Metabolites</b></html>"), "1,0");
+		panelORA.add(new JLabel("<html><b>Reference Metabolites</b></html>"), "1,1");
+		JButton btnLoadDiff = new JButton("Load");
+		JButton btnLoadRef = new JButton("Load");
+		
+		btnLoadDiff.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				int res = fc.showOpenDialog(null);
+				if (res == JFileChooser.APPROVE_OPTION) {
+					tfPathToDifferentiallyExpressedFile.setText(fc.getSelectedFile().getAbsolutePath());
+				}
+			}
+		});
+		
+		btnLoadRef.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				int res = fc.showOpenDialog(null);
+				if (res == JFileChooser.APPROVE_OPTION) {
+					tfPathToReferenceFile.setText(fc.getSelectedFile().getAbsolutePath());
+				}
+			}
+		});
+
+		panelORA.add(tfPathToDifferentiallyExpressedFile, "3,0");
+		panelORA.add(tfPathToReferenceFile, "3,1");
+		panelORA.add(btnLoadDiff, "4,0");
+		panelORA.add(btnLoadRef, "4,1");
+
+		JPanel fillPanel = new JPanel();
+		fillPanel.setBackground(Color.WHITE);
+
+		frameORA.add(panelORA, "0,0");
+		frameORA.add(fillPanel, "0,1");
+		frameORA.add(buttonExecuteORA, "0,2");
+		frameORA.setSize(500, 180);
+		frameORA.setLocationRelativeTo(null);
+
+		buttonExecuteORA.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (tfPathToDifferentiallyExpressedFile.getText().equals(defaultTextForLoadFile)) {
+					JOptionPane.showMessageDialog(null,
+							"There is no file selected for the differentially expressed metabolites.");
+				} else {
+					try {
+						if (tfPathToReferenceFile.getText().equals(defaultTextForLoadFile)) {
+							MMEController.getInstance().oraAction(tfPathToDifferentiallyExpressedFile.getText(), null);
+						} else {
+							MMEController.getInstance().oraAction(tfPathToDifferentiallyExpressedFile.getText(),
+									tfPathToReferenceFile.getText());
+						}
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					frameORA.setVisible(false);
+				}
+
+			}
+		});
+
+		JButton btnORA = new JButton("Over-Representation Analysis");
+
+		btnORA.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				tfPathToDifferentiallyExpressedFile.setText(defaultTextForLoadFile);
+				tfPathToReferenceFile.setText(defaultTextForLoadFile);
+				frameORA.revalidate();
+				frameORA.setVisible(true);
+			}
+		});
+
+		return btnORA;
+	}
+
 	/**
 	 * Creates and returns the JComponent for the Session Information.
 	 * 
@@ -240,7 +328,7 @@ public class MMETab extends InspectorTab {
 		this.lblSessionInfoSubsystems = new JLabel("");
 
 		sessionInfoPanel.add(new JLabel("<html><u>General</u></html>"), "0,0");
-		
+
 		sessionInfoPanel.add(new JLabel("Base Graph: "), "0,1");
 		sessionInfoPanel.add(this.lblSessionInfoBaseGraph, "1,1");
 		sessionInfoPanel.add(new JLabel("Metabolites: "), "0,2");
@@ -262,20 +350,21 @@ public class MMETab extends InspectorTab {
 		monitorOuterPanel.add(this.monitorScrollPane, "0,0");
 
 		JPanel infoPanel = new JPanel();
-		infoPanel.setLayout(new TableLayout(new double[][] { { TableLayoutConstants.MINIMUM, 10.0, 1.0, 10.0, TableLayoutConstants.FILL },
-				{ TableLayoutConstants.MINIMUM } }));
-		
+		infoPanel.setLayout(new TableLayout(
+				new double[][] { { TableLayoutConstants.MINIMUM, 10.0, 1.0, 10.0, TableLayoutConstants.FILL },
+						{ TableLayoutConstants.MINIMUM } }));
+
 		infoPanel.add(sessionInfoPanel, "0,0");
 		JPanel separatorPanel = new JPanel();
 		separatorPanel.setBackground(Color.BLACK);
 		infoPanel.add(separatorPanel, "2,0");
-		
+
 		instantiateSelectionInformationPanel();
 		infoPanel.add(this.panelSelectionInformation, "4,0");
 		infoPanel.setBackground(Color.WHITE);
 		addOneElementSpanning(FolderPanel.getBorderedComponent(infoPanel, 2, 0, 0, 0), fpSessionInfo);
 //		fpSessionInfo.addGuiComponentRow(FolderPanel.getBorderedComponent(infoPanel, 2, 0, 0, 0), null, true);
-		
+
 		return fpSessionInfo;
 	}
 
@@ -287,13 +376,13 @@ public class MMETab extends InspectorTab {
 
 		this.panelSelectionInformation = new JPanel();
 		this.panelSelectionInformation.setBackground(Color.WHITE);
-		
+
 		this.panelSelectionInformation.setLayout(
 				new TableLayout(new double[][] { { TableLayoutConstants.FILL }, { TableLayoutConstants.MINIMUM } }));
 
 		this.panelSelectedSubsystemInfo = new JPanel();
-		this.panelSelectedSubsystemInfo.setLayout(new TableLayout(new double[][] {
-				{ TableLayoutConstants.MINIMUM }, { TableLayoutConstants.MINIMUM,
+		this.panelSelectedSubsystemInfo.setLayout(
+				new TableLayout(new double[][] { { TableLayoutConstants.MINIMUM }, { TableLayoutConstants.MINIMUM,
 						TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM } }));
 
 		this.lblNameOfSelectedSubsystem = new JLabel("");
@@ -307,20 +396,19 @@ public class MMETab extends InspectorTab {
 		this.panelSelectedSubsystemInfo.setBackground(Color.WHITE);
 
 		this.panelSelectedEdgeInfo = new JPanel();
-		this.panelSelectedEdgeInfo.setLayout(new TableLayout(new double[][] {
-			{TableLayoutConstants.PREFERRED}, {TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, 3.0, TableLayoutConstants.MINIMUM,  50.0}
-		}));
+		this.panelSelectedEdgeInfo.setLayout(new TableLayout(new double[][] { { TableLayoutConstants.PREFERRED },
+				{ TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM,
+						TableLayoutConstants.MINIMUM, 3.0, TableLayoutConstants.MINIMUM, 50.0 } }));
 		this.panelSelectedEdgeInfo.setBackground(Color.WHITE);
-		
-		
+
 //		JPanel labelPanelSelectedEdgeInfo = new JPanel();
 //		labelPanelSelectedEdgeInfo.setLayout(new TableLayout(new double[][] {
 //			{TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM}, {TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM}
 //		}));
-		
+
 		this.lblNameSubsystem1OfSelectedEdge = new JLabel("");
 		this.lblNameSubsystem2OfSelectedEdge = new JLabel("");
-		
+
 		this.panelSelectedEdgeInfo.add(new JLabel("<html><u>Selected&nbsp;Edge</u></html>"), "0,0");
 		this.panelSelectedEdgeInfo.add(new JLabel("Involved subsystems:"), "0,1");
 //		labelPanelSelectedEdgeInfo.add(new JLabel("Subsystem 1: "), "0,1");
@@ -329,31 +417,22 @@ public class MMETab extends InspectorTab {
 		this.panelSelectedEdgeInfo.add(this.lblNameSubsystem2OfSelectedEdge, "0,3");
 //		labelPanelSelectedEdgeInfo.setBackground(Color.WHITE);
 		this.panelSelectedEdgeInfo.add(new JLabel("Corresponding Interfaces:"), "0,5");
-		
-		
+
 		this.interfaceListPanel = new JPanel();
 		this.scrollPaneSelectedEdgeInfo = new JScrollPane(this.interfaceListPanel,
 				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		
+
 //		this.panelSelectedEdgeInfo.add(labelPanelSelectedEdgeInfo, "0,0");
 		this.panelSelectedEdgeInfo.add(this.scrollPaneSelectedEdgeInfo, "0,6");
-		
-		this.panelNoSelection = new JPanel();
-		this.panelNoSelection.setLayout(new TableLayout(new double[][] {
-			{TableLayoutConstants.PREFERRED}, {TableLayoutConstants.MINIMUM}
-		}));
-		this.panelNoSelection.add(new JLabel("<html>Select a single edge or a single<br> node in the overview graph.</html>"), "0,0");
-		this.panelNoSelection.setBackground(Color.WHITE);
-		
-		this.panelSelectionInformation.add(this.panelNoSelection, "0,0");
 
-		// instantiate panel
-		// instantiate edge info panel
-		// edge info scroll pane
-		// edge info list panel
-		// edge info 2 lbls
-		// instantiate subs info panel
-		// subs info 3blbs
+		this.panelNoSelection = new JPanel();
+		this.panelNoSelection.setLayout(new TableLayout(
+				new double[][] { { TableLayoutConstants.PREFERRED }, { TableLayoutConstants.MINIMUM } }));
+		this.panelNoSelection.add(
+				new JLabel("<html>Select a single edge or a single<br> node in the overview graph.</html>"), "0,0");
+		this.panelNoSelection.setBackground(Color.WHITE);
+
+		this.panelSelectionInformation.add(this.panelNoSelection, "0,0");
 
 	}
 
@@ -641,35 +720,29 @@ public class MMETab extends InspectorTab {
 	 */
 	public void showSelectedEdgeInfo(String subsystem1, String subsystem2, ArrayList<String> interfaceNames) {
 		this.panelSelectionInformation.removeAll();
-		
+
 		String name1ToShow = subsystem1.length() > 25 ? subsystem1.substring(0, 24) + "..." : subsystem1;
 		String name2ToShow = subsystem2.length() > 25 ? subsystem2.substring(0, 24) + "..." : subsystem2;
-		
+
 		this.lblNameSubsystem1OfSelectedEdge.setText("- " + name1ToShow);
 		this.lblNameSubsystem2OfSelectedEdge.setText("- " + name2ToShow);
-		
+
 		this.interfaceListPanel.removeAll();
 		double[] rows = new double[interfaceNames.size()];
 		for (int i = 0; i < rows.length; i++) {
 			rows[i] = TableLayoutConstants.MINIMUM;
 		}
-		this.interfaceListPanel.setLayout(new TableLayout(new double[][] {
-			{TableLayoutConstants.FILL}, rows
-		}));
-		
+		this.interfaceListPanel.setLayout(new TableLayout(new double[][] { { TableLayoutConstants.FILL }, rows }));
+
 		for (int i = 0; i < interfaceNames.size(); i++) {
 //			String labelToShow = interfaceNames.get(i).length() > 25 ? interfaceNames.get(i).substring(0, 24) + "..." : interfaceNames.get(i);
 			JLabel lbl = new JLabel(interfaceNames.get(i));
 			interfaceListPanel.add(lbl, "0," + i);
 		}
-		
+
 		this.panelSelectionInformation.add(this.panelSelectedEdgeInfo, "0,0");
 		this.panelSelectionInformation.revalidate();
 		this.panelSelectionInformation.repaint();
-		// Labels
-		// Panel nehmen und layout einstellen
-		//LAbels einfuegen, fertig.
-		// testen.
 	}
 
 	/**
@@ -693,12 +766,12 @@ public class MMETab extends InspectorTab {
 	 */
 	public void showSelectedSubsystemInfo(String subsystemName, int numberOfMetabolites, int numberOfReactions) {
 		this.panelSelectionInformation.removeAll();
-		
+
 		String nameToShow = subsystemName.length() > 25 ? subsystemName.substring(0, 24) + "..." : subsystemName;
 		this.lblNameOfSelectedSubsystem.setText(nameToShow);
 		this.lblNumberMetabolitesOfSelectedSubsystem.setText(Integer.toString(numberOfMetabolites) + " Metabolites");
 		this.lblNumberReactionsOfSelectedSubsystem.setText(Integer.toString(numberOfReactions) + " Reactions");
-		
+
 		this.panelSelectionInformation.add(this.panelSelectedSubsystemInfo, "0,0");
 		this.panelSelectionInformation.revalidate();
 		this.panelSelectionInformation.repaint();
