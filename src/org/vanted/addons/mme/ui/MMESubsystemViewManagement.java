@@ -66,7 +66,7 @@ public class MMESubsystemViewManagement {
 		if ((MMEViewManagement.getInstance().getSubsystemFrame() == null)
 				|| (MMEViewManagement.getInstance().getSubsystemFrame().isClosed() == true)) {
 			clearView = true;
-			System.out.println("Frame null oder closed");
+//			System.out.println("Frame null oder closed");
 		}
 		if (clearView) {
 			resetLists();
@@ -97,12 +97,12 @@ public class MMESubsystemViewManagement {
 		
 		updateView(useColor);
 		
-		for (SubsystemGraph subsystem : currentSubsystems) {
-			if (useColor) {
-				AttributeHelper.setFillColor(MMEController.getInstance().getCurrentSession().getOverviewGraph()
-						.getNodeOfSubsystem(subsystem), colorMap.get(subsystem));
-			}
-		}
+//		for (SubsystemGraph subsystem : currentSubsystems) {
+//			if (useColor) {
+//				AttributeHelper.setFillColor(MMEController.getInstance().getCurrentSession().getOverviewGraph()
+//						.getNodeOfSubsystem(subsystem), colorMap.get(subsystem));
+//			}
+//		}
 
 		HashSet<Node> speciesHashSet = new HashSet<Node>();
 		HashSet<Node> reactionsHashSet = new HashSet<Node>();
@@ -130,6 +130,8 @@ public class MMESubsystemViewManagement {
 		HashSet<Edge> addedEdges = new HashSet<>();
 		HashSet<Node> processedInterfaces = new HashSet<>();
 
+		resetOverviewGraphColoring();
+		
 		for (SubsystemGraph subsystem : currentSubsystems) {
 			if (useColor) {
 				AttributeHelper.setFillColor(MMEController.getInstance().getCurrentSession().getOverviewGraph()
@@ -214,7 +216,7 @@ public class MMESubsystemViewManagement {
 	}
 
 	public void resetOverviewGraphColoring() {
-		for (SubsystemGraph subsystem : currentSubsystems) {
+		for (SubsystemGraph subsystem : MMEController.getInstance().getCurrentSession().getOverviewGraph().getDecomposition().getSubsystems()) {
 			AttributeHelper.setFillColor(
 					MMEController.getInstance().getCurrentSession().getOverviewGraph().getNodeOfSubsystem(subsystem),
 					Color.WHITE);
