@@ -97,12 +97,12 @@ public class LMMESubsystemViewManagement {
 		
 		updateView(useColor);
 		
-//		for (SubsystemGraph subsystem : currentSubsystems) {
-//			if (useColor) {
-//				AttributeHelper.setFillColor(MMEController.getInstance().getCurrentSession().getOverviewGraph()
-//						.getNodeOfSubsystem(subsystem), colorMap.get(subsystem));
-//			}
-//		}
+		for (SubsystemGraph subsystem : currentSubsystems) {
+			if (useColor) {
+				AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
+						.getNodeOfSubsystem(subsystem), colorMap.get(subsystem));
+			}
+		}
 
 		HashSet<Node> speciesHashSet = new HashSet<Node>();
 		HashSet<Node> reactionsHashSet = new HashSet<Node>();
@@ -133,10 +133,11 @@ public class LMMESubsystemViewManagement {
 		resetOverviewGraphColoring();
 		
 		for (SubsystemGraph subsystem : currentSubsystems) {
-			if (useColor) {
-				AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
-						.getNodeOfSubsystem(subsystem), colorMap.get(subsystem));
-			}
+//			if (useColor) {
+//				AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
+//						.getNodeOfSubsystem(subsystem), colorMap.get(subsystem));
+//				System.out.println("Set color of " + subsystem.getName());
+//			}
 			// access and use color when creating nodes.
 			for (Node speciesNode : subsystem.getSpeciesNodes()) {
 				if (!nodes2newNodes.keySet().contains(speciesNode)) {

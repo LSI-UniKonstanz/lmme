@@ -119,7 +119,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 				requestAndProcessPackageSeparately(reactionPackage);
 			}
 			this.packageStart += 10;
-			MainFrame.showMessage("So far " + packageStart + " reactions have been queried from Kegg.",
+			MainFrame.showMessage("So far " + packageStart + " of " + reactionsWithKeggId.size() + " reactions have been queried from Kegg.",
 					MessageType.PERMANENT_INFO);
 		}
 		reactionPackage = new ArrayList<>();
@@ -346,7 +346,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 			this.fp = new FolderPanel(getName() + " Settings", false, true, false, null);
 
 			this.cbTag = createComboBox();
-			JPanel tagLine = LMMETab.combine(new JLabel("SBML Tag:"), this.cbTag, Color.WHITE, false, true);
+			JPanel tagLine = LMMETab.combine(new JLabel("SBML Note:"), this.cbTag, Color.WHITE, false, true);
 			this.tagRow = new GuiRow(tagLine, null);
 			fp.addGuiComponentRow(this.tagRow, true);
 
@@ -396,7 +396,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 
 	public void updateFolderPanel() {
 		this.cbTag = createComboBox();
-		JPanel tagLine = LMMETab.combine(new JLabel("SBML Tag:"), this.cbTag, Color.WHITE, false, true);
+		JPanel tagLine = LMMETab.combine(new JLabel("SBML Note:"), this.cbTag, Color.WHITE, false, true);
 		this.tagRow.left = tagLine;
 		this.fp.layoutRows();
 	}

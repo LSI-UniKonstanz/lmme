@@ -132,7 +132,7 @@ public class LMMETab extends InspectorTab {
 
 		int rowCount = 1;
 
-		JButton btnSetModel = new JButton("Set model");
+		JButton btnSetModel = new JButton("Set Model");
 		btnSetModel.setToolTipText(
 				"Sets the model from the currently active view as the base graph for the decomposition.");
 		mainPanel.add(btnSetModel, "0," + rowCount);
@@ -197,7 +197,7 @@ public class LMMETab extends InspectorTab {
 		mainPanel.add(createSubsystemsViewComponent(), "0," + rowCount);
 		rowCount += 2;
 
-		JButton btnShowSubsystems = new JButton("Show selected subsystems");
+		JButton btnShowSubsystems = new JButton("Show Selected Subsystems");
 		btnShowSubsystems.setToolTipText("Shows the expanded versions of the currently selected subsystems "
 				+ "from the left window in the right window.");
 		mainPanel.add(btnShowSubsystems, "0," + rowCount);
@@ -445,7 +445,7 @@ public class LMMETab extends InspectorTab {
 		this.panelNoSelection.setLayout(new TableLayout(
 				new double[][] { { TableLayoutConstants.PREFERRED }, { TableLayoutConstants.MINIMUM } }));
 		this.panelNoSelection.add(
-				new JLabel("<html>Select a single edge or a single<br> node in the overview graph.</html>"), "0,0");
+				new JLabel("<html>Select a single edge or a single<br>node in the overview graph to<br>show additional information here.</html>"), "0,0");
 		this.panelNoSelection.setBackground(Color.WHITE);
 
 		this.panelSelectionInformation.add(this.panelNoSelection, "0,0");
@@ -537,7 +537,7 @@ public class LMMETab extends InspectorTab {
 
 		JFrame clonableSpeciesFrame = new JFrame("Clonable Species Selection");
 		JPanel clonableSpeciesPanel = new JPanel();
-		JButton submitClonableSpecies = new JButton("Submit");
+		JButton submitClonableSpecies = new JButton("Accept");
 		clonableSpeciesFrame.setLayout(
 				new TableLayout(new double[][] { { TableLayoutConstants.FILL }, { 300, TableLayoutConstants.FILL } }));
 		JScrollPane clonableSpeciesScrollPane = new JScrollPane(clonableSpeciesPanel,
@@ -548,7 +548,7 @@ public class LMMETab extends InspectorTab {
 
 		JLabel labelSliderSplitDeg = new JLabel("Degree Threshold: ");
 		JLabel labelSliderSplitDegCurr = new JLabel();
-		JLabel labelSliderCorrespSpecies = new JLabel("Corresponding species: ");
+		JLabel labelSliderCorrespSpecies = new JLabel("Corresponding Species: ");
 		this.labelSliderCorrespSpeciesNumber = new JLabel();
 
 		this.lblEditedCloneList = new JLabel(" (edited)");
@@ -715,7 +715,7 @@ public class LMMETab extends InspectorTab {
 		ckbClearSubsView.setBackground(Color.WHITE);
 		fp.addGuiComponentRow(ckbClearSubsView, null, true);
 
-		this.ckbUseColorMapping = new JCheckBox("Use Colors for Subsystems");
+		this.ckbUseColorMapping = new JCheckBox("Use colors for subsystems");
 		ckbUseColorMapping.setSelected(true);
 		ckbUseColorMapping.setBackground(Color.WHITE);
 		fp.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbUseColorMapping, 5, 0, 0, 0), null, true);

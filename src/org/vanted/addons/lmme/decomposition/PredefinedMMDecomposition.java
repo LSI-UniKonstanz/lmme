@@ -64,7 +64,7 @@ public class PredefinedMMDecomposition extends MMDecompositionAlgorithm {
 			fp = new FolderPanel(getName() + " Settings", false, true, false, null);
 
 			this.cbTag = createComboBox();
-			JPanel tagLine = LMMETab.combine(new JLabel("SBML Tag:"), this.cbTag, Color.WHITE, false, true);
+			JPanel tagLine = LMMETab.combine(new JLabel("SBML Note:"), this.cbTag, Color.WHITE, false, true);
 			this.tagRow = new GuiRow(tagLine, null);
 			fp.addGuiComponentRow(this.tagRow, true);
 		}
@@ -76,7 +76,7 @@ public class PredefinedMMDecomposition extends MMDecompositionAlgorithm {
 	 */
 	public void updateFolderPanel() {
 		this.cbTag = createComboBox();
-		JPanel tagLine = LMMETab.combine(new JLabel("SBML Tag:"), this.cbTag, Color.WHITE, false, true);
+		JPanel tagLine = LMMETab.combine(new JLabel("SBML Note:"), this.cbTag, Color.WHITE, false, true);
 		this.tagRow.left = tagLine;
 		this.fp.layoutRows();
 	}
