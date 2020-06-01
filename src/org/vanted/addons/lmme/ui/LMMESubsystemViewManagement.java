@@ -1,6 +1,20 @@
-/**
+/*******************************************************************************
+ * LMME is a VANTED Add-on for the exploration of large metabolic models.
+ * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
  * 
- */
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.vanted.addons.lmme.ui;
 
 import java.awt.Color;
@@ -24,13 +38,11 @@ import de.ipk_gatersleben.ag_nw.graffiti.plugins.editcomponents.cluster_colors.C
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.layouters.pattern_springembedder.clusterCommands.PajekClusterColor;
 
 /**
- * This class manages the subsystem view during the exploration phase. Among
- * others, it is responsible for the resonable combination of selected subsystem
- * graphs to a whole and the addition of further subsystems to an existing
- * drawing.
+ * Manages the subsystem view during the exploration phase. Among others, it is
+ * responsible for the resonable combination of selected subsystem graphs to a
+ * whole and the addition of further subsystems to an existing drawing.
  * 
  * @author Michael Aichem
- *
  */
 public class LMMESubsystemViewManagement {
 
@@ -43,7 +55,7 @@ public class LMMESubsystemViewManagement {
 	private Color defaultColor;
 
 	private HashMap<SubsystemGraph, Color> colorMap;
-	
+
 	private final int nodeSize = 50;
 
 	private LMMESubsystemViewManagement() {
@@ -94,9 +106,9 @@ public class LMMESubsystemViewManagement {
 				}
 			}
 		}
-		
+
 		updateView(useColor);
-		
+
 		for (SubsystemGraph subsystem : currentSubsystems) {
 			if (useColor) {
 				AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
@@ -131,7 +143,7 @@ public class LMMESubsystemViewManagement {
 		HashSet<Node> processedInterfaces = new HashSet<>();
 
 		resetOverviewGraphColoring();
-		
+
 		for (SubsystemGraph subsystem : currentSubsystems) {
 //			if (useColor) {
 //				AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
@@ -222,7 +234,7 @@ public class LMMESubsystemViewManagement {
 					.getDecomposition().getSubsystems()) {
 				AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
 						.getNodeOfSubsystem(subsystem), Color.WHITE);
-			} 
+			}
 		}
 	}
 
