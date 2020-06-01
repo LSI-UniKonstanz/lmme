@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * LMME is a VANTED Add-on for the exploration of large metabolic models.
+ * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.vanted.addons.lmme.ui;
 
 import java.awt.Color;
@@ -57,6 +74,12 @@ import org.vanted.addons.lmme.layout.ForceDirectedMMLayout;
 import info.clearthought.layout.TableLayout;
 import info.clearthought.layout.TableLayoutConstants;
 
+/**
+ * The VANTED tab for LMME.
+ *
+ * @author Michael Aichem
+ * @author Tobias Czauderna
+ */
 public class LMMETab extends InspectorTab {
 
 	// instance variables begin
@@ -241,7 +264,7 @@ public class LMMETab extends InspectorTab {
 		panelORA.add(new JLabel("<html><b>Reference Metabolites</b></html>"), "1,1");
 		JButton btnLoadDiff = new JButton("Load");
 		JButton btnLoadRef = new JButton("Load");
-		
+
 		btnLoadDiff.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
@@ -251,7 +274,7 @@ public class LMMETab extends InspectorTab {
 				}
 			}
 		});
-		
+
 		btnLoadRef.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
@@ -275,9 +298,10 @@ public class LMMETab extends InspectorTab {
 						+ "<p></p>"
 						+ "<p><b>Differentially Expressed Metabolites:</b> Please upload a file that contains the IDs of the differentially expressed metabolites</p>"
 						+ "<p><b>Reference Metabolites:</b> Please upload a file that contains the IDs of the total set of metabolites that have been measured (including the differentially expressed ones). If no file is selected, the total set of metabolites of the model is used as default.</p></html>");
-		
+
 		JPanel panelORADescription = new JPanel();
-		panelORADescription.setLayout(new TableLayout(new double[][] {{TableLayoutConstants.FILL}, {TableLayoutConstants.MINIMUM}}));
+		panelORADescription.setLayout(
+				new TableLayout(new double[][] { { TableLayoutConstants.FILL }, { TableLayoutConstants.MINIMUM } }));
 		panelORADescription.add(FolderPanel.getBorderedComponent(lblORADescription, 5, 5, 5, 5), "0,0");
 		panelORADescription.setBackground(Color.WHITE);
 		frameORA.add(panelORADescription, "0,0");
@@ -444,8 +468,9 @@ public class LMMETab extends InspectorTab {
 		this.panelNoSelection = new JPanel();
 		this.panelNoSelection.setLayout(new TableLayout(
 				new double[][] { { TableLayoutConstants.PREFERRED }, { TableLayoutConstants.MINIMUM } }));
-		this.panelNoSelection.add(
-				new JLabel("<html>Select a single edge or a single<br>node in the overview graph to<br>show additional information here.</html>"), "0,0");
+		this.panelNoSelection.add(new JLabel(
+				"<html>Select a single edge or a single<br>node in the overview graph to<br>show additional information here.</html>"),
+				"0,0");
 		this.panelNoSelection.setBackground(Color.WHITE);
 
 		this.panelSelectionInformation.add(this.panelNoSelection, "0,0");
@@ -642,13 +667,14 @@ public class LMMETab extends InspectorTab {
 		});
 
 		JButton btnShowHistogram = new JButton("Show Degree Distribution");
-		
+
 		btnShowHistogram.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (LMMEController.getInstance().getCurrentSession().isModelSet()) {
 					HistogramDataset dataset = new HistogramDataset();
-					
-					ArrayList<Node> originalSpecies = LMMEController.getInstance().getCurrentSession().getBaseGraph().getOriginalSpeciesNodes();
+
+					ArrayList<Node> originalSpecies = LMMEController.getInstance().getCurrentSession().getBaseGraph()
+							.getOriginalSpeciesNodes();
 					double[] degrees = new double[originalSpecies.size()];
 					int i = 0;
 					for (Node speciesNode : originalSpecies) {
@@ -656,7 +682,8 @@ public class LMMETab extends InspectorTab {
 						i++;
 					}
 					dataset.addSeries("Data", degrees, 100, 0.0, 100.0);
-					JFreeChart chart = ChartFactory.createHistogram("Degree Distribution", "Degree", null, dataset, PlotOrientation.VERTICAL, false, false, false);
+					JFreeChart chart = ChartFactory.createHistogram("Degree Distribution", "Degree", null, dataset,
+							PlotOrientation.VERTICAL, false, false, false);
 					chart.getXYPlot().getRangeAxis().setRange(0.0, 100.0);
 					ChartPanel chartPanel = new ChartPanel(chart);
 					JFrame chartFrame = new JFrame();
@@ -667,8 +694,10 @@ public class LMMETab extends InspectorTab {
 				}
 			}
 		});
-		
-		fp.addGuiComponentRow(combine(btnShowHistogram,combine(editCloneListButton, lblEditedCloneList, Color.WHITE, false, true), Color.WHITE, false, true), null, true);
+
+		fp.addGuiComponentRow(combine(btnShowHistogram,
+				combine(editCloneListButton, lblEditedCloneList, Color.WHITE, false, true), Color.WHITE, false, true),
+				null, true);
 
 		return fp;
 	}

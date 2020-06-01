@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * LMME is a VANTED Add-on for the exploration of large metabolic models.
+ * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.vanted.addons.lmme.analysis;
 
 import java.io.BufferedReader;
@@ -21,12 +38,11 @@ import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBMLSpeciesHelper;
  * This class implements an over-representation analysis (ORA). A list of
  * differentially expressed metabolites is checked against a reference set of
  * metabolites. The latter may be the set of all metabolites present in the
- * model, if not specified otherwise by the user. To correct for ultiple
+ * model, if not specified otherwise by the user. To correct for multiple
  * testing, the false discovery rate (FDR) is controlled according to the method
  * by Benjamini and Hochberg.
  * 
  * @author Michael Aichem
- *
  */
 public class OverRepresentationAnalysis {
 

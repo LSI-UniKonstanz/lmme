@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * LMME is a VANTED Add-on for the exploration of large metabolic models.
+ * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.vanted.addons.lmme.decomposition;
 
 import java.awt.Color;
@@ -24,6 +41,17 @@ import org.vanted.addons.lmme.ui.LMMETab;
 
 import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
 
+/**
+ * This method is an implementation of the method that has been proposed in the
+ * following paper:
+ * 
+ * S. Schuster, T. Pfeiffer, F. Moldenhauer, I. Koch, T. Dandekar, Exploring the
+ * pathway structure of metabolism: decomposition into subnetworks and
+ * application to Mycoplasma pneumoniae, Bioinformatics, Volume 18, Issue 2,
+ * February 2002, Pages 351–361.
+ *
+ * @author Michael Aichem
+ */
 public class SchusterMMDecomposition extends MMDecompositionAlgorithm {
 
 	private int defaultThreshold = 8;
@@ -78,7 +106,8 @@ public class SchusterMMDecomposition extends MMDecompositionAlgorithm {
 		for (Set<Node> nodes : connComps) {
 			for (Node node : nodes) {
 				Node originalNode = copied2OriginalNodes.get(node);
-				if (LMMETools.getInstance().isReaction(originalNode) && !alreadyClassifiedNodes.contains(originalNode)) {
+				if (LMMETools.getInstance().isReaction(originalNode)
+						&& !alreadyClassifiedNodes.contains(originalNode)) {
 					LMMEController.getInstance().getCurrentSession().addNodeAttribute(originalNode,
 							this.ATTRIBUTE_NAME_SUBSYSTEM, "Algorithmically derived Subsystem " + count);
 				}
@@ -86,7 +115,8 @@ public class SchusterMMDecomposition extends MMDecompositionAlgorithm {
 			count++;
 		}
 
-		return determineSubsystemsFromReactionAttributes(this.ATTRIBUTE_NAME_SUBSYSTEM, true, ";", alreadyClassifiedNodes);
+		return determineSubsystemsFromReactionAttributes(this.ATTRIBUTE_NAME_SUBSYSTEM, true, ";",
+				alreadyClassifiedNodes);
 	}
 
 	/**

@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * LMME is a VANTED Add-on for the exploration of large metabolic models.
+ * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.vanted.addons.lmme.decomposition;
 
 import java.awt.Color;
@@ -36,6 +53,15 @@ import de.ipk_gatersleben.ag_nw.graffiti.NeedsSwingThread;
 import de.ipk_gatersleben.ag_nw.graffiti.services.web.RestService;
 import info.clearthought.layout.TableLayout;
 
+/**
+ * This method uses the KEGG IDs, that have been assigned to the reactions, uses
+ * the information from KEGG, which reactions belong to which pathways, to
+ * finally determine a set of KEGG pathways that are very likely to be present
+ * in the model at hand.
+ *
+ * @author Michael Aichem
+ * @author Tobias Czauderna
+ */
 public class KeggMMDecomposition extends MMDecompositionAlgorithm implements NeedsSwingThread {
 
 	private JComboBox<String> cbTag;
@@ -119,8 +145,8 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 				requestAndProcessPackageSeparately(reactionPackage);
 			}
 			this.packageStart += 10;
-			MainFrame.showMessage("So far " + packageStart + " of " + reactionsWithKeggId.size() + " reactions have been queried from Kegg.",
-					MessageType.PERMANENT_INFO);
+			MainFrame.showMessage("So far " + packageStart + " of " + reactionsWithKeggId.size()
+					+ " reactions have been queried from Kegg.", MessageType.PERMANENT_INFO);
 		}
 		reactionPackage = new ArrayList<>();
 		for (int i = this.packageStart; i < reactionsWithKeggId.size(); i++) {
@@ -425,9 +451,9 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 	 * 
 	 */
 	public String getName() {
-		return "KEGG Annotation";
+		return "KEGG Decomposition";
 	}
-	
+
 	public boolean requiresTransporterSubsystem() {
 		return false;
 	}

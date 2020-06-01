@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * LMME is a VANTED Add-on for the exploration of large metabolic models.
+ * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.vanted.addons.lmme.graphs;
 
 import java.awt.Color;
@@ -24,6 +41,12 @@ import org.vanted.addons.lmme.decomposition.MMDecomposition;
 import org.vanted.addons.lmme.ui.LMMETab;
 import org.vanted.addons.lmme.ui.LMMEViewManagement;
 
+/**
+ * Maintains the generated overview graph, which models the relationships
+ * between the individual subsystems.
+ *
+ * @author Michael Aichem
+ */
 public class OverviewGraph {
 
 	private final int nodeSize = 100;
@@ -154,7 +177,7 @@ public class OverviewGraph {
 	 * panel.
 	 */
 	public void registerSelectionListener() {
-		
+
 		EditorSession editorSession = null;
 		for (EditorSession es : MainFrame.getInstance().getEditorSessions()) {
 			if (es.getGraph() == this.graph) {
@@ -163,35 +186,35 @@ public class OverviewGraph {
 			}
 		}
 		editorSession.getSelectionModel().addSelectionListener(new SelectionListener() {
-			
+
 			public void selectionListChanged(SelectionEvent e) {
 				// Do nothing.
 			}
-			
+
 			public void selectionChanged(SelectionEvent e) {
 				Collection<Edge> edges = e.getSelection().getEdges();
 				Collection<Node> nodes = e.getSelection().getNodes();
 				LMMETab tab = LMMEController.getInstance().getTab();
-				
+
 				if ((edges.size() == 1) && (nodes.size() == 0)) {
 					Edge edge = edges.iterator().next();
 					ArrayList<String> names = new ArrayList<String>();
 					for (Node interfaceNode : edgeToInterfacesMap.get(edge)) {
 						names.add(AttributeHelper.getLabel(interfaceNode, ""));
 					}
-					tab.showSelectedEdgeInfo(nodeToSubsystemMap.get(edge.getSource()).getName(), nodeToSubsystemMap.get(edge.getTarget()).getName(), names);
+					tab.showSelectedEdgeInfo(nodeToSubsystemMap.get(edge.getSource()).getName(),
+							nodeToSubsystemMap.get(edge.getTarget()).getName(), names);
 				} else if ((nodes.size() == 1) && (edges.size() == 0)) {
 					Node node = nodes.iterator().next();
 					SubsystemGraph subsystem = nodeToSubsystemMap.get(node);
-					tab.showSelectedSubsystemInfo(subsystem.getName(), subsystem.getNumberOfSpecies(), subsystem.getNumberOfReactions());
+					tab.showSelectedSubsystemInfo(subsystem.getName(), subsystem.getNumberOfSpecies(),
+							subsystem.getNumberOfReactions());
 				} else {
 					tab.resetSelectionInfo();
 				}
 			}
 		});
-		
-		
-		
+
 	}
 
 	/**

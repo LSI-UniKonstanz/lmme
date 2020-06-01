@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * LMME is a VANTED Add-on for the exploration of large metabolic models.
+ * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.vanted.addons.lmme.layout;
 
 import javax.swing.JPanel;
@@ -12,6 +29,8 @@ import org.graffiti.plugins.views.defaults.DrawMode;
 import org.graffiti.plugins.views.defaults.GraffitiView;
 import org.graffiti.selection.Selection;
 import org.graffiti.session.EditorSession;
+import org.vanted.addons.lmme.graphs.OverviewGraph;
+import org.vanted.addons.lmme.graphs.SubsystemGraph;
 import org.vanted.addons.lmme.ui.LMMEViewManagement;
 
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.layouters.pattern_springembedder.myOp;
@@ -20,36 +39,49 @@ import de.ipk_gatersleben.ag_nw.graffiti.plugins.layouters.pattern_springembedde
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.layouters.pattern_springembedder.PatternSpringembedder;
 import de.ipk_gatersleben.ag_nw.graffiti.services.task.BackgroundTaskHelper;
 
+/**
+ * A force-directed layout for the {@link OverviewGraph} as well as a
+ * {@link SubsystemGraph}.
+ * 
+ * Uses the implementation of the Spring Embedder, that is available in Vanted.
+ * The main idea is to use a physical analogy to create a visually appealing
+ * drawing of a graph. Physical forces are assumed in two ways: attractive force
+ * between adjacent vertices and repulsive forces between any pair of vertices.
+ * Node movement according to these forces is then computed iteratively until a
+ * force equilibrium is reached. See the publication below for more details.
+ * 
+ * Eades, P. (1984). A heuristic for graph drawing. Congressus numerantium, 42,
+ * 149-160.
+ *
+ * @author Michael Aichem
+ */
 public class ForceDirectedMMLayout implements MMOverviewLayout, MMSubsystemLayout {
 
-	
 	/**
 	 * 
 	 */
 	public void layOutAsSubsystems(Graph graph) {
-		
+
 		LMMEViewManagement.getInstance().ensureSubsystemViewActive();
 		layOut(graph);
-		
+
 	}
 
 	/**
 	 * 
 	 */
 	public void layOutAsOverview(Graph graph) {
-		
+
 		LMMEViewManagement.getInstance().ensureOverviewActive();
 		layOut(graph);
-		
+
 	}
-	
-	
-	
+
 	/**
 	 * 
 	 */
 	public void layOut(Graph graph) {
-		
+
 //		ThreadSafeOptions threadSafeOptions = MyNonInteractiveSpringEmb.getNewThreadSafeOptionsWithDefaultSettings();
 //		threadSafeOptions.doFinishMoveToTop = true;
 //		threadSafeOptions.doFinishRemoveOverlapp = true;
@@ -62,24 +94,23 @@ public class ForceDirectedMMLayout implements MMOverviewLayout, MMSubsystemLayou
 //		threadSafeOptions.setDval(myOp.DvalIndexSliderHorForce, 90000);
 //		threadSafeOptions.setDval(myOp.DvalIndexSliderVertForce, 90000);
 //		Selection selection = new Selection(graph.getGraphElements());
-		
+
 		final PatternSpringembedder pse = new PatternSpringembedder();
-		
+
 		JPanel pluginContent = new JPanel();
 		ThreadSafeOptions optionsForPlugin = new ThreadSafeOptions();
-		
+
 		if (pse.setControlInterface(optionsForPlugin, pluginContent)) {
 			for (int i = 0; i < pluginContent.getComponents().length; i++) {
-				if ((pluginContent.getComponents()[i] instanceof JMButton) && ((JMButton) pluginContent.getComponents()[i]).getText().equalsIgnoreCase("Layout Network")) {
+				if ((pluginContent.getComponents()[i] instanceof JMButton)
+						&& ((JMButton) pluginContent.getComponents()[i]).getText().equalsIgnoreCase("Layout Network")) {
 					((JMButton) pluginContent.getComponents()[i]).doClick();
 				}
 			}
 		}
-		
+
 		ConnectedComponentLayout.layoutConnectedComponents(graph);
-		
-		
-		
+
 //		Thread newBackgroundThread = new Thread(new Runnable() {
 //			public void run() {
 //				threadSafeOptions.setGraphInstance(graph);
@@ -94,15 +125,7 @@ public class ForceDirectedMMLayout implements MMOverviewLayout, MMSubsystemLayou
 //		newBackgroundThread.setName("SpringEmbedderLayout");
 //		newBackgroundThread.setPriority(Thread.MIN_PRIORITY);
 //		newBackgroundThread.start();
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
 //		MyNonInteractiveSpringEmb nonInteractiveSpringEmbedder = new MyNonInteractiveSpringEmb(graph, selection,
 //				threadSafeOptions);
 //		
@@ -120,8 +143,7 @@ public class ForceDirectedMMLayout implements MMOverviewLayout, MMSubsystemLayou
 //        }
 //		BackgroundTaskHelper.issueSimpleTask("LayoutModel", "", nonInteractiveSpringEmbedder, null,
 //				nonInteractiveSpringEmbedder);
-		
-		
+
 	}
 
 	/**
@@ -130,7 +152,7 @@ public class ForceDirectedMMLayout implements MMOverviewLayout, MMSubsystemLayou
 	public String getName() {
 		return name();
 	}
-	
+
 	public static String name() {
 		return "Force-Directed";
 	}

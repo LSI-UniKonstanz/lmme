@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * LMME is a VANTED Add-on for the exploration of large metabolic models.
+ * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.vanted.addons.lmme.decomposition;
 
 import java.util.ArrayList;
@@ -26,9 +43,10 @@ import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBML_Constants;
 
 /**
+ * Abstract class that needs to be extended whenever a new decomposition method
+ * is to be implemented.
  * 
  * @author Michael Aichem
- *
  */
 public abstract class MMDecompositionAlgorithm {
 
@@ -186,8 +204,8 @@ public abstract class MMDecompositionAlgorithm {
 						}
 					}
 				}
-				subsystems.add(new SubsystemGraph(LMMEConstants.DEFAULT_SUBSYSTEM + " " + i, speciesNodes, reactionNodes,
-						edges));
+				subsystems.add(new SubsystemGraph(LMMEConstants.DEFAULT_SUBSYSTEM + " " + i, speciesNodes,
+						reactionNodes, edges));
 				i += 1;
 			}
 		}
@@ -257,7 +275,7 @@ public abstract class MMDecompositionAlgorithm {
 	}
 
 	public abstract boolean requiresCloning();
-	
+
 	public abstract boolean requiresTransporterSubsystem();
 
 	public abstract FolderPanel getFolderPanel();
