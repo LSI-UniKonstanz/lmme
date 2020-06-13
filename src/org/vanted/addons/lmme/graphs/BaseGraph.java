@@ -199,7 +199,10 @@ public class BaseGraph {
 	}
 
 	public int getNumberOfSpeciesWithDegreeAtLeast(int degree) {
-		return degreeSpecies[degree];
+		if (degreeSpecies.length >= degree + 1)
+			return degreeSpecies[degree];
+		else
+			return 0;
 	}
 
 	public ArrayList<Node> getOriginalSpeciesWithDegreeAtLeast(int degree) {
