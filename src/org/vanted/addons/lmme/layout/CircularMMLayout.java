@@ -56,7 +56,7 @@ public class CircularMMLayout implements MMOverviewLayout {
 		
 		layoutTools.crossingMin(layer1, layer2);
 		
-		ArrayList<Node> allNodes = new ArrayList<>();
+		// ArrayList<Node> allNodes = new ArrayList<>();
 		for (int i = layer2.size() - 1; i >= 0; i--) {
 			layer1.add(layer2.get(i));
 		}

@@ -215,15 +215,17 @@ public class LMMEController {
 	}
 	
 	public void showSubsystemGraphsAction() {
-		ArrayList<SubsystemGraph> selectedSubsystems = this.currentSession.getOverviewGraph().getSelectedSubsystems();
-		if (!selectedSubsystems.isEmpty()) {
-			LMMESubsystemViewManagement.getInstance().showSubsystems(selectedSubsystems,
-					this.tab.getClearSubsystemView(), this.tab.getCkbUseColorMapping());
-			this.subsystemLayoutsMap.get(this.tab.getSubsystemLayoutMethod())
-					.layOutAsSubsystems(LMMEViewManagement.getInstance().getSubsystemFrame().getView().getGraph());
-		} else {
-			JOptionPane.showMessageDialog(null, "There are no subsystems selected in the overview graph.");
-			return;
+		if (this.currentSession.getOverviewGraph() != null) {
+			ArrayList<SubsystemGraph> selectedSubsystems = this.currentSession.getOverviewGraph().getSelectedSubsystems();
+			if (!selectedSubsystems.isEmpty()) {
+				LMMESubsystemViewManagement.getInstance().showSubsystems(selectedSubsystems,
+						this.tab.getClearSubsystemView(), this.tab.getCkbUseColorMapping());
+				this.subsystemLayoutsMap.get(this.tab.getSubsystemLayoutMethod())
+						.layOutAsSubsystems(LMMEViewManagement.getInstance().getSubsystemFrame().getView().getGraph());
+			} else {
+				JOptionPane.showMessageDialog(null, "There are no subsystems selected in the overview graph.");
+				return;
+			}
 		}
 		
 	}
