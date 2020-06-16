@@ -1,27 +1,20 @@
 /*******************************************************************************
  * LMME is a VANTED Add-on for the exploration of large metabolic models.
  * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
- * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.vanted.addons.lmme.core;
 
 import java.awt.Color;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -29,15 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-import javax.swing.text.DefaultStyledDocument;
-import javax.wsdl.OperationType;
 
 import org.AttributeHelper;
 import org.graffiti.editor.GraffitiInternalFrame;
@@ -46,10 +32,8 @@ import org.graffiti.editor.MainFrame;
 import org.graffiti.graph.Graph;
 import org.graffiti.plugin.algorithm.Algorithm;
 import org.graffiti.util.InstanceLoader;
-import org.sbml.jsbml.util.SBMLtools;
 import org.vanted.addons.lmme.analysis.OverRepresentationAnalysis;
 import org.vanted.addons.lmme.decomposition.CompartmentMMDecomposition;
-import org.vanted.addons.lmme.decomposition.GirvanMMDecomposition;
 import org.vanted.addons.lmme.decomposition.KeggMMDecomposition;
 import org.vanted.addons.lmme.decomposition.MMDecomposition;
 import org.vanted.addons.lmme.decomposition.MMDecompositionAlgorithm;
@@ -70,10 +54,7 @@ import org.vanted.addons.lmme.ui.LMMETab;
 import org.vanted.addons.lmme.ui.LMMEViewManagement;
 
 import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
-import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBMLHelper;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBMLSpeciesHelper;
-import info.clearthought.layout.TableLayout;
-import info.clearthought.layout.TableLayoutConstants;
 
 /**
  * This class controls and coordinates the actions of LMME. It implements the
@@ -84,84 +65,84 @@ import info.clearthought.layout.TableLayoutConstants;
  * @author Tobias Czauderna
  */
 public class LMMEController {
-
+	
 	private static LMMEController instance;
-
+	
 	private LMMESession currentSession;
-
+	
 	private LMMETab tab;
-
+	
 	private HashMap<String, MMDecompositionAlgorithm> decompositionAlgorithmsMap = new HashMap<>();
 	private HashMap<String, MMOverviewLayout> overviewLayoutsMap = new HashMap<>();
 	private HashMap<String, MMSubsystemLayout> subsystemLayoutsMap = new HashMap<>();
-
+	
 	private LMMEController() {
-
+		
 		currentSession = new LMMESession();
-
+		
 		PredefinedMMDecomposition predefDecomp = new PredefinedMMDecomposition();
 		KeggMMDecomposition keggDecomp = new KeggMMDecomposition();
 		SchusterMMDecomposition schusterDecomp = new SchusterMMDecomposition();
 		CompartmentMMDecomposition compartmentDecomp = new CompartmentMMDecomposition();
 //		GirvanMMDecomposition girvanDecomp = new GirvanMMDecomposition();
-
+		
 		decompositionAlgorithmsMap.put(predefDecomp.getName(), predefDecomp);
 		decompositionAlgorithmsMap.put(keggDecomp.getName(), keggDecomp);
 		decompositionAlgorithmsMap.put(schusterDecomp.getName(), schusterDecomp);
 		decompositionAlgorithmsMap.put(compartmentDecomp.getName(), compartmentDecomp);
 //		decompositionAlgorithmsMap.put(girvanDecomp.getName(), girvanDecomp);
-
+		
 		ForceDirectedMMLayout forceLayout = new ForceDirectedMMLayout();
 		ConcentricCirclesMMLayout concentricCircLayout = new ConcentricCirclesMMLayout();
 		ParallelLinesMMLayout parallelLinesLayout = new ParallelLinesMMLayout();
 		CircularMMLayout circularLayout = new CircularMMLayout();
 		GridMMLayout gridLayout = new GridMMLayout();
-
+		
 		overviewLayoutsMap.put(forceLayout.getName(), forceLayout);
 		overviewLayoutsMap.put(circularLayout.getName(), circularLayout);
 		overviewLayoutsMap.put(gridLayout.getName(), gridLayout);
-
+		
 		subsystemLayoutsMap.put(forceLayout.getName(), forceLayout);
 		subsystemLayoutsMap.put(concentricCircLayout.getName(), concentricCircLayout);
 		subsystemLayoutsMap.put(parallelLinesLayout.getName(), parallelLinesLayout);
-
+		
 	}
-
+	
 	public static synchronized LMMEController getInstance() {
 		if (LMMEController.instance == null) {
 			LMMEController.instance = new LMMEController();
 		}
 		return LMMEController.instance;
 	}
-
+	
 	public HashMap<String, MMDecompositionAlgorithm> getDecompositionAlgorithmsMap() {
 		return decompositionAlgorithmsMap;
 	}
-
+	
 	public HashMap<String, MMOverviewLayout> getOverviewLayoutsMap() {
 		return overviewLayoutsMap;
 	}
-
+	
 	public HashMap<String, MMSubsystemLayout> getSubsystemLayoutsMap() {
 		return subsystemLayoutsMap;
 	}
-
+	
 	public LMMESession getCurrentSession() {
 		return currentSession;
 	}
-
+	
 	public void setCurrentSession(LMMESession currentSession) {
 		this.currentSession = currentSession;
 	}
-
+	
 	public LMMETab getTab() {
 		return tab;
 	}
-
+	
 	public void setTab(LMMETab tab) {
 		this.tab = tab;
 	}
-
+	
 	public void setModelAction() {
 		if (this.currentSession.isModelSet()) {
 			// 0=Yes, 1=No, -1=window closed
@@ -190,7 +171,7 @@ public class LMMEController {
 			return;
 		}
 	}
-
+	
 	public void showOverviewGraphAction() {
 		if (this.currentSession.isModelSet()) {
 			if (this.currentSession.isOverviewGraphConstructed()) {
@@ -205,7 +186,7 @@ public class LMMEController {
 				LMMEViewManagement.getInstance().closeFrames();
 				partiallyResetSession();
 			}
-
+			
 			Thread decompositionThread = new Thread(new Runnable() {
 				public void run() {
 					MMDecomposition decomposition = decompositionAlgorithmsMap.get(tab.getDecompositionMethod())
@@ -230,9 +211,9 @@ public class LMMEController {
 			JOptionPane.showMessageDialog(null, "No base graph was set.");
 			return;
 		}
-
+		
 	}
-
+	
 	public void showSubsystemGraphsAction() {
 		ArrayList<SubsystemGraph> selectedSubsystems = this.currentSession.getOverviewGraph().getSelectedSubsystems();
 		if (!selectedSubsystems.isEmpty()) {
@@ -244,11 +225,11 @@ public class LMMEController {
 			JOptionPane.showMessageDialog(null, "There are no subsystems selected in the overview graph.");
 			return;
 		}
-
+		
 	}
-
+	
 	public void oraAction(String pathToDifferentiallyExpressedFile, String pathToReferenceFile) throws IOException {
-
+		
 		if (this.currentSession.isOverviewGraphConstructed()) {
 			OverRepresentationAnalysis ora = new OverRepresentationAnalysis(pathToDifferentiallyExpressedFile,
 					pathToReferenceFile);
@@ -262,17 +243,16 @@ public class LMMEController {
 			JOptionPane.showMessageDialog(null, "There was no overview graph constructed so far.");
 		}
 	}
-
+	
 	/**
 	 * This method translates the model to SBGN if the SBGN-ED addon is available.
 	 * TODO: move translation to background thread, runs currently in main thread
 	 * TODO: provide proper error message to user if method is not available because
 	 * SBGN-ED addon is not available OR deactivate button TODO: currently the
 	 * original graph is translated to SBGN, maybe translate the copy?
-	 * 
 	 */
 	public void transformToSbgnAction() {
-
+		
 		try {
 			Class<?> SBMLTranslationMode = Class.forName("org.sbgned.translation.SBMLTranslationMode", true,
 					InstanceLoader.getCurrentLoader());
@@ -282,14 +262,14 @@ public class LMMEController {
 			Constructor<?> constructor = SBMLTranslation.getDeclaredConstructor(SBMLTranslationMode);
 			// enumConstants[0] INTERACTIVE, enumConstants[1] NONINTERACTIVE
 			Object instance = constructor.newInstance(enumConstants[1]);
-
+			
 			GraffitiInternalFrame gif = LMMEViewManagement.getInstance().getSubsystemFrame();
 			MainFrame.getInstance().setActiveSession(gif.getSession(), gif.getView());
-
+			
 			// runs as algorithm to get the current graph
 			GravistoService.getInstance().runAlgorithm((Algorithm) instance, null);
 			GraphHelper.issueCompleteRedrawForActiveView();
-
+			
 		} catch (ClassNotFoundException e) {
 			JOptionPane.showMessageDialog(null,
 					"Could not find SBGN-ED Add-on. Please make sure that it is installed before using this function.");
@@ -312,14 +292,14 @@ public class LMMEController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		
 	}
-
+	
 	private void resetSession() {
 		currentSession = new LMMESession();
 		this.tab.updateGUI();
 	}
-
+	
 	public void partiallyResetSession() {
 		Graph originalGraph = currentSession.getBaseGraph().getOriginalGraph();
 		currentSession = new LMMESession(new BaseGraph(originalGraph));
