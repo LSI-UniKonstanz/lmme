@@ -1,19 +1,16 @@
 /*******************************************************************************
  * LMME is a VANTED Add-on for the exploration of large metabolic models.
  * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
- * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.vanted.addons.lmme.decomposition;
 
@@ -31,7 +28,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.ws.rs.core.MediaType;
@@ -63,29 +59,32 @@ import info.clearthought.layout.TableLayout;
  * @author Tobias Czauderna
  */
 public class KeggMMDecomposition extends MMDecompositionAlgorithm implements NeedsSwingThread {
-
+	
 	private JComboBox<String> cbTag;
 	private GuiRow tagRow;
 	private FolderPanel fp;
-
+	
 	private JTextField separator;
 	private JLabel minimumNumberValue;
 	private JSlider minimumNumberSlider;
-
+	
+	private HashMap<String, String> notesShort2longForm = new HashMap<String, String>();
+	private HashMap<String, String> notesLong2ShortForm = new HashMap<String, String>();
+	
 	private final String ATTRIBUTE_NAME_KEGG_ID = "KeggID";
-
+	
 	private final String ATTRIBUTE_NAME_FINAL_SUBSYSTEM = "FinalSubsystem";
-
+	
 	/**
 	 * The rest service for the KEGG requests.
 	 */
 	private RestService restService = new RestService("http://rest.kegg.jp/get/");
-
+	
 	private HashMap<Node, ArrayList<String>> node2possibleSubsystems;
 	private HashMap<String, Integer> subsystem2number;
-
+	
 	private int packageStart;
-
+	
 	/**
 	 * 
 	 */
@@ -93,34 +92,34 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		this.node2possibleSubsystems = new HashMap<>();
 		this.subsystem2number = new HashMap<>();
 	}
-
+	
 	@Override
 	protected ArrayList<SubsystemGraph> runSpecific(HashSet<Node> alreadyClassifiedNodes) {
-
+		
 		LMMETools.getInstance().readNotes(this.getSelectedTag(), this.ATTRIBUTE_NAME_KEGG_ID);
-
+		
 		request();
-
+		
 		while (!this.node2possibleSubsystems.isEmpty()) {
 			updateSubsystemNumber();
 			removeTooSmallSubsystems();
 			removeNodesWithoutSubsystem();
 			extractNodesFromHugestSubsystem();
 		}
-
+		
 		return determineSubsystemsFromReactionAttributes(ATTRIBUTE_NAME_FINAL_SUBSYSTEM, false, "",
 				alreadyClassifiedNodes);
 	}
-
+	
 	/**
 	 * For each reaction that has a KEGG ID, an HTTP request to KEGG is sent,
 	 * querying the pathways that belong to the reaction. These are then stored in
 	 * the the HashMap {@link node2possibleSubsystems}.
 	 */
 	private void request() {
-
+		
 		LMMESession currentSession = LMMEController.getInstance().getCurrentSession();
-
+		
 		// Grab reactions with viable KEGG reaction id.
 		ArrayList<Node> reactionsWithKeggId = new ArrayList<>();
 		for (Node reactionNode : currentSession.getBaseGraph().getReactionNodes()) {
@@ -129,7 +128,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 				reactionsWithKeggId.add(reactionNode);
 			}
 		}
-
+		
 		ArrayList<Node> reactionPackage;
 		String[] res;
 		this.packageStart = 0;
@@ -161,12 +160,13 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 			}
 		}
 	}
-
+	
 	/**
 	 * This method sends HTTP requests to KEGG for a whole package of up to 10
 	 * reactions.
 	 * 
-	 * @param reactionPackage The package of reaction nodes to be requested
+	 * @param reactionPackage
+	 *           The package of reaction nodes to be requested
 	 * @return a list of request result Strings
 	 */
 	private String[] requestPackage(ArrayList<Node> reactionPackage) {
@@ -191,15 +191,17 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		response = response.substring(0, response.length() - 3);
 		return response.split(Pattern.quote(LMMEConstants.KEGGSEP));
 	}
-
+	
 	/**
 	 * This method stores the results from the KEGG requests in the map
 	 * {@link node2possibleSubsystems}. The method thus therefore expects two lists:
 	 * a list of reactions and a list of request result Strings, that match position
 	 * by position. This method assumes both lists to have the same length.
 	 * 
-	 * @param reactionNodes  The nodes that have been requested
-	 * @param requestResults The results from the request
+	 * @param reactionNodes
+	 *           The nodes that have been requested
+	 * @param requestResults
+	 *           The results from the request
 	 */
 	private void processPackageResults(ArrayList<Node> reactionNodes, String[] requestResults) {
 		for (int i = 0; i < reactionNodes.size(); i++) {
@@ -208,7 +210,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 			processSingleNode(reactionNode, response);
 		}
 	}
-
+	
 	/**
 	 * This method also expects a list of reaction nodes but in contrast to
 	 * {@link requestPackage} it requests AND processes (stores the results in the
@@ -217,8 +219,9 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 	 * of {@link requestPackage} such that list sizes do not match or if a reaction
 	 * has had assigned more than one KEGG id.
 	 * 
-	 * @param reactionPackage A list of reaction nodes that will be requested and
-	 *                        directly processed.
+	 * @param reactionPackage
+	 *           A list of reaction nodes that will be requested and
+	 *           directly processed.
 	 */
 	private void requestAndProcessPackageSeparately(ArrayList<Node> reactionPackage) {
 		for (Node reactionNode : reactionPackage) {
@@ -233,7 +236,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 			} else {
 				severalIDs.add(keggId);
 			}
-
+			
 			for (String singleKeggRid : severalIDs) {
 				String response = (String) this.restService.makeRequest("rn:" + singleKeggRid,
 						MediaType.TEXT_PLAIN_TYPE, String.class);
@@ -241,7 +244,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 			}
 		}
 	}
-
+	
 	/**
 	 * This method processes a single node, meaning that the given request result is
 	 * nterpreted in the context of the given reaction node and the respective
@@ -275,7 +278,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 			}
 		}
 	}
-
+	
 	private void updateSubsystemNumber() {
 		subsystem2number.clear();
 		for (Node reactionNode : node2possibleSubsystems.keySet()) {
@@ -288,7 +291,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 			}
 		}
 	}
-
+	
 	private void removeTooSmallSubsystems() {
 		ArrayList<String> subsystemsToRemove = new ArrayList<>();
 		for (String smallSubsystem : subsystem2number.keySet()) {
@@ -303,9 +306,9 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 			subsystem2number.remove(subsystem);
 		}
 	}
-
+	
 	private void removeNodesWithoutSubsystem() {
-
+		
 		ArrayList<Node> nodesToRemove = new ArrayList<>();
 		for (Node reactionNode : node2possibleSubsystems.keySet()) {
 			if (node2possibleSubsystems.get(reactionNode).isEmpty()) {
@@ -315,15 +318,15 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		for (Node nodeToRemove : nodesToRemove) {
 			node2possibleSubsystems.remove(nodeToRemove);
 		}
-
+		
 	}
-
+	
 	private void extractNodesFromHugestSubsystem() {
-
+		
 		if (subsystem2number.isEmpty()) {
 			return;
 		}
-
+		
 		int currentMax = 0;
 		String hugestSubsystem = "";
 		for (String subsystem : subsystem2number.keySet()) {
@@ -332,7 +335,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 				hugestSubsystem = subsystem;
 			}
 		}
-
+		
 		ArrayList<Node> nodesToRemove = new ArrayList<>();
 		for (Node reactionNode : node2possibleSubsystems.keySet()) {
 			if (node2possibleSubsystems.get(reactionNode).contains(hugestSubsystem)) {
@@ -343,20 +346,20 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		}
 		LMMEController.getInstance().getTab()
 				.logMsg("Added " + nodesToRemove.size() + " nodes to subsystem " + hugestSubsystem);
-
+		
 		for (Node nodeToRemove : nodesToRemove) {
 			node2possibleSubsystems.remove(nodeToRemove);
 		}
-
+		
 	}
-
+	
 	/**
 	 * 
 	 */
 	public boolean requiresCloning() {
 		return true;
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -365,26 +368,26 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 	 */
 	@Override
 	public FolderPanel getFolderPanel() {
-
+		
 		if (this.fp != null) {
 			updateFolderPanel();
 		} else {
 			this.fp = new FolderPanel(getName() + " Settings", false, true, false, null);
-
+			
 			this.cbTag = createComboBox();
 			JPanel tagLine = LMMETab.combine(new JLabel("SBML Note:"), this.cbTag, Color.WHITE, false, true);
 			this.tagRow = new GuiRow(tagLine, null);
 			fp.addGuiComponentRow(this.tagRow, true);
-
+			
 			JLabel lblSeparator = new JLabel("Separator:");
 			this.separator = new JTextField(5);
 			this.separator.setText(",");
 			JPanel separatorLine = LMMETab.combine(lblSeparator, this.separator, Color.WHITE, false, true);
 			fp.addGuiComponentRow(FolderPanel.getBorderedComponent(separatorLine, 5, 0, 0, 0), null, true);
-
+			
 			JLabel lblMinimumNumber = new JLabel("Minimum reactions per pathway:");
 			this.minimumNumberValue = new JLabel();
-
+			
 			this.minimumNumberSlider = new JSlider();
 			if (SystemInfo.isMac()) {
 				this.minimumNumberSlider.setPaintTrack(false);
@@ -410,28 +413,49 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 				}
 			});
 			this.minimumNumberSlider.setValue(5);
-
+			
 			JComponent minimumNumberComponent = TableLayout.getDoubleRow(
 					LMMETab.combine(lblMinimumNumber, this.minimumNumberValue, Color.WHITE, false, true),
 					this.minimumNumberSlider, Color.WHITE);
-
+			
 			fp.addGuiComponentRow(minimumNumberComponent, null, true);
 		}
 		return fp;
 	}
-
+	
 	public void updateFolderPanel() {
-		this.cbTag = createComboBox();
+		if (this.cbTag == null) {
+			this.cbTag = createComboBox();
+		} else {
+			String currentVal = getSelectedTag();
+			this.cbTag = createComboBox(currentVal);
+		}
 		JPanel tagLine = LMMETab.combine(new JLabel("SBML Note:"), this.cbTag, Color.WHITE, false, true);
 		this.tagRow.left = tagLine;
 		this.fp.layoutRows();
 	}
-
+	
 	private JComboBox<String> createComboBox() {
 		JComboBox<String> cb;
 		if (LMMEController.getInstance().getCurrentSession().isModelSet()) {
-			cb = new JComboBox<String>(
-					LMMEController.getInstance().getCurrentSession().getBaseGraph().getAvailableNotes());
+			String[] availableNotes = LMMEController.getInstance().getCurrentSession().getBaseGraph().getAvailableNotes();
+			notesLong2ShortForm.clear();
+			notesShort2longForm.clear();
+			String[] cbReadyNotes = new String[availableNotes.length];
+			for (int i = 0; i < availableNotes.length; i++) {
+				String str = availableNotes[i];
+				if (str.length() <= 30) {
+					notesLong2ShortForm.put(str, str);
+					notesShort2longForm.put(str, str);
+					cbReadyNotes[i] = str;
+				} else {
+					String strShortened = str.substring(0, 30) + "...";
+					notesLong2ShortForm.put(str, strShortened);
+					notesShort2longForm.put(strShortened, str);
+					cbReadyNotes[i] = strShortened;
+				}
+			}
+			cb = new JComboBox<String>(cbReadyNotes);
 		} else {
 			cb = new JComboBox<String>();
 		}
@@ -442,20 +466,34 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		}
 		return cb;
 	}
-
-	private String getSelectedTag() {
-		return (String) this.cbTag.getSelectedItem();
+	
+	private JComboBox<String> createComboBox(String initiallySelectedValue) {
+		JComboBox<String> cb = createComboBox();
+		for (int i = 0; i < cb.getItemCount(); i++) {
+			if (cb.getItemAt(i).equalsIgnoreCase(initiallySelectedValue)) {
+				cb.setSelectedIndex(i);
+			}
+		}
+		return cb;
 	}
-
+	
+	private String getSelectedTag() {
+		if (this.cbTag == null) {
+			return "";
+		} else {
+			return notesShort2longForm.get((String) this.cbTag.getSelectedItem());
+		}
+	}
+	
 	/**
 	 * 
 	 */
 	public String getName() {
 		return "KEGG Decomposition";
 	}
-
+	
 	public boolean requiresTransporterSubsystem() {
 		return false;
 	}
-
+	
 }
