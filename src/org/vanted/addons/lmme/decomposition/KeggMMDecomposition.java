@@ -32,6 +32,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.ws.rs.core.MediaType;
 
+import org.ErrorMsg;
 import org.FolderPanel;
 import org.GuiRow;
 import org.SystemInfo;
@@ -186,6 +187,8 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		urlPostFix = urlPostFix.substring(1);
 		String response = (String) this.restService.makeRequest(urlPostFix, MediaType.TEXT_PLAIN_TYPE, String.class);
 		if ((response == null)) {
+			// TODO: proper evaluation of response once RestService returns a map instead of just a string
+			ErrorMsg.addErrorMessage("KEGG Decomposition failed: could not retrieve pathway information for reactions from KEGG database.");
 			return new String[0];
 		}
 		response = response.substring(0, response.length() - 3);
@@ -276,6 +279,9 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 					lineIndex++;
 				}
 			}
+		} else {
+			// TODO: proper evaluation of response once RestService returns a map instead of just a string
+			ErrorMsg.addErrorMessage("KEGG Decomposition failed: could not retrieve pathway information for reactions from KEGG database.");
 		}
 	}
 	
