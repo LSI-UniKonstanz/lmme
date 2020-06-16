@@ -221,7 +221,8 @@ public abstract class MMDecompositionAlgorithm {
 		for (Node reactionNode : baseGraph.getReactionNodes()) {
 			if (!alreadyClassifiedNodes.contains(reactionNode)) {
 				String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
-				if (subsystemName != "") {
+				// if (subsystemName != "") {
+				if (subsystemName.length() > 0) {
 					if (considerSeparator) {
 						String[] subsystemNames = subsystemName.split(Pattern.quote(separator));
 						allSubsystemNames.addAll(Arrays.asList(subsystemNames));
@@ -242,7 +243,8 @@ public abstract class MMDecompositionAlgorithm {
 		for (Node reactionNode : baseGraph.getReactionNodes()) {
 			if (!alreadyClassifiedNodes.contains(reactionNode)) {
 				String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
-				if (subsystemName != "") {
+				// if (subsystemName != "") {
+				if (subsystemName.length() > 0) {
 					String[] subsystemNames;
 					if (considerSeparator) {
 						subsystemNames = subsystemName.split(Pattern.quote(separator));
