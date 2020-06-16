@@ -1,19 +1,16 @@
 /*******************************************************************************
  * LMME is a VANTED Add-on for the exploration of large metabolic models.
  * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
- * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.vanted.addons.lmme.decomposition;
 
@@ -49,61 +46,61 @@ import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBML_Constants;
  * @author Michael Aichem
  */
 public abstract class MMDecompositionAlgorithm {
-
+	
 	// Returns arraylist of subsystems, the subsystems itself should only contain
 	// references to the basegraph.
 	protected abstract ArrayList<SubsystemGraph> runSpecific(HashSet<Node> alreadyClassifiedNodes);
-
+	
 	// returns decomposition?
 	public MMDecomposition run(boolean addTransporterSubsystem) {
-
+		
 		LMMESession currentSession = LMMEController.getInstance().getCurrentSession();
 		LMMETab tab = LMMEController.getInstance().getTab();
-
+		
 		if (this.requiresCloning()) {
 			LMMEController.getInstance().getCurrentSession().getBaseGraph().cloneSpecies(tab.getClonableSpecies());
 		}
-
+		
 		HashSet<Node> transporters;
 		SubsystemGraph transporterSubsystem = null;
-
+		
 		if (requiresTransporterSubsystem() || addTransporterSubsystem) {
 			transporterSubsystem = this.determineTransporterSubsystem();
 			transporters = (HashSet<Node>) transporterSubsystem.getReactionNodes().clone();
 		} else {
 			transporters = new HashSet<>();
 		}
-
+		
 		ArrayList<SubsystemGraph> specificSubsystems = runSpecific(transporters);
-
+		
 		if (transporterSubsystem != null) {
 			specificSubsystems.add(transporterSubsystem);
 		}
-
+		
 		MMDecomposition decomposition = new MMDecomposition(specificSubsystems);
-
+		
 		SubsystemGraph defaultSubsystem = this.determineDefaultSubsystem(decomposition);
-
+		
 		if (defaultSubsystem != null) {
 			decomposition.addSubsystem(defaultSubsystem);
 		}
-
+		
 		return decomposition;
 		// todo combine them to create a Decomposition.
 		// possibly create the additional subsystem
 	}
-
+	
 	private SubsystemGraph determineTransporterSubsystem() {
 		HashSet<Node> speciesNodes = new HashSet<>();
 		HashSet<Node> reactionNodes = new HashSet<>();
 		HashSet<Edge> edges = new HashSet<>();
-
+		
 		for (Node reactionNode : LMMEController.getInstance().getCurrentSession().getBaseGraph().getReactionNodes()) {
-
+			
 			HashSet<String> compartments = new HashSet<String>();
 			Collection<Edge> edgeSet = reactionNode.getEdges();
 			HashSet<Node> neighbors = new HashSet<Node>();
-
+			
 			for (Edge edge : edgeSet) {
 				Node neighbor;
 				if (edge.getSource() == reactionNode) {
@@ -117,22 +114,22 @@ public abstract class MMDecompositionAlgorithm {
 				}
 				neighbors.add(neighbor);
 			}
-
+			
 			if (compartments.size() > 1) {
 				speciesNodes.addAll(neighbors);
 				reactionNodes.add(reactionNode);
 				edges.addAll(edgeSet);
 			}
 		}
-
+		
 		return new SubsystemGraph(LMMEConstants.TRANSPORTER_SUBSYSTEM, speciesNodes, reactionNodes, edges);
 	}
-
+	
 	private SubsystemGraph determineDefaultSubsystem(MMDecomposition decomposition) {
 		HashSet<Node> speciesNodes = new HashSet<>();
 		HashSet<Node> reactionNodes = new HashSet<>();
 		HashSet<Edge> edges = new HashSet<>();
-
+		
 		for (Node reactionNode : LMMEController.getInstance().getCurrentSession().getBaseGraph().getReactionNodes()) {
 			if (!decomposition.hasReactionBeenClassified(reactionNode)) {
 				for (Edge inEdge : reactionNode.getDirectedInEdges()) {
@@ -152,18 +149,18 @@ public abstract class MMDecompositionAlgorithm {
 			return new SubsystemGraph(LMMEConstants.DEFAULT_SUBSYSTEM, speciesNodes, reactionNodes, edges);
 		}
 	}
-
+	
 	private ArrayList<SubsystemGraph> splitDefaultSubsystem(MMDecomposition decomposition,
 			SubsystemGraph defaultSubsystem, int threshold) {
-
+		
 		ArrayList<SubsystemGraph> subsystems = new ArrayList<>();
-
+		
 		Graph workingCopy = new AdjListGraph();
 		HashMap<Node, Node> original2CopiedNodes = new HashMap<>();
 		HashMap<Node, Node> copied2OriginalNodes = new HashMap<>();
 		// HashMap<Edge, Edge> original2CopiedEdges = new HashMap<>();
 		HashMap<Edge, Edge> copied2OriginalEdges = new HashMap<>();
-
+		
 		for (Node speciesNode : defaultSubsystem.getSpeciesNodes()) {
 			Node newNode = workingCopy.addNodeCopy(speciesNode);
 			original2CopiedNodes.put(speciesNode, newNode);
@@ -174,16 +171,16 @@ public abstract class MMDecompositionAlgorithm {
 			original2CopiedNodes.put(reactionNode, newNode);
 			copied2OriginalNodes.put(newNode, reactionNode);
 		}
-
+		
 		for (Edge edge : defaultSubsystem.getEdges()) {
 			Node sourceNode = original2CopiedNodes.get(edge.getSource());
 			Node tragetNode = original2CopiedNodes.get(edge.getTarget());
 			Edge newEdge = workingCopy.addEdgeCopy(edge, sourceNode, tragetNode);
 			copied2OriginalEdges.put(newEdge, edge);
 		}
-
+		
 		Set<Set<Node>> connComps = GraphHelper.getConnectedComponents(workingCopy.getNodes());
-
+		
 		int i = 1;
 		for (Set<Node> connComp : connComps) {
 			if (connComp.size() >= threshold) {
@@ -209,18 +206,18 @@ public abstract class MMDecompositionAlgorithm {
 				i += 1;
 			}
 		}
-
+		
 		return subsystems;
 	}
-
+	
 	protected ArrayList<SubsystemGraph> determineSubsystemsFromReactionAttributes(String attributeName,
 			boolean considerSeparator, String separator, HashSet<Node> alreadyClassifiedNodes) {
-
+		
 		BaseGraph baseGraph = LMMEController.getInstance().getCurrentSession().getBaseGraph();
 		LMMESession currentSession = LMMEController.getInstance().getCurrentSession();
-
+		
 		HashSet<String> allSubsystemNames = new HashSet<>();
-
+		
 		for (Node reactionNode : baseGraph.getReactionNodes()) {
 			if (!alreadyClassifiedNodes.contains(reactionNode)) {
 				String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
@@ -234,14 +231,14 @@ public abstract class MMDecompositionAlgorithm {
 				}
 			}
 		}
-
+		
 		HashMap<String, SubsystemGraph> subsystemMap = new HashMap<>();
-
+		
 		for (String subsystemName : allSubsystemNames) {
 			subsystemMap.put(subsystemName,
 					new SubsystemGraph(subsystemName, new HashSet<>(), new HashSet<>(), new HashSet<>()));
 		}
-
+		
 		for (Node reactionNode : baseGraph.getReactionNodes()) {
 			if (!alreadyClassifiedNodes.contains(reactionNode)) {
 				String subsystemName = currentSession.getNodeAttribute(reactionNode, attributeName);
@@ -273,14 +270,14 @@ public abstract class MMDecompositionAlgorithm {
 		}
 		return res;
 	}
-
+	
 	public abstract boolean requiresCloning();
-
+	
 	public abstract boolean requiresTransporterSubsystem();
-
+	
 	public abstract FolderPanel getFolderPanel();
-
+	
 	public abstract void updateFolderPanel();
-
+	
 	public abstract String getName();
 }

@@ -1,19 +1,16 @@
 /*******************************************************************************
  * LMME is a VANTED Add-on for the exploration of large metabolic models.
  * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
- * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.vanted.addons.lmme.graphs;
 
@@ -23,7 +20,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
 import org.AttributeHelper;
 import org.graffiti.editor.MainFrame;
@@ -34,7 +30,6 @@ import org.graffiti.graph.Node;
 import org.graffiti.plugins.inspectors.defaults.DefaultEditPanel;
 import org.graffiti.selection.SelectionEvent;
 import org.graffiti.selection.SelectionListener;
-import org.graffiti.selection.SelectionModel;
 import org.graffiti.session.EditorSession;
 import org.vanted.addons.lmme.core.LMMEController;
 import org.vanted.addons.lmme.decomposition.MMDecomposition;
@@ -48,65 +43,65 @@ import org.vanted.addons.lmme.ui.LMMEViewManagement;
  * @author Michael Aichem
  */
 public class OverviewGraph {
-
+	
 	private final int nodeSize = 100;
-
+	
 	private Graph graph;
-
+	
 	private MMDecomposition decomposition;
-
+	
 	// private HashMap<Edge, ArrayList<Node>> interfaceMap = new HashMap<>();
-
+	
 	private HashMap<SubsystemGraph, HashMap<SubsystemGraph, ArrayList<Node>>> interfaceMap;
-
+	
 	// private ArrayList<String> interfaces = new ArrayList<>();
-
+	
 	/**
 	 * A map that maps a node in the overview graph to its corresponding subsystem
 	 * graph.
 	 */
 	private HashMap<Node, SubsystemGraph> nodeToSubsystemMap;
-
+	
 	/**
 	 * A map that maps a subsystem to its corresponding node in the overview graph.
 	 */
 	private HashMap<SubsystemGraph, Node> subsystemToNodeMap;
-
+	
 	/**
 	 * A map that maps en edge to the interfaces between the corresponding
 	 * subsystems.
 	 */
 	private HashMap<Edge, ArrayList<Node>> edgeToInterfacesMap;
-
+	
 	public OverviewGraph(Graph graph) {
 		// this.graph = graph;
 		// determineInterfaces();
 	}
-
+	
 	public OverviewGraph(MMDecomposition decomposition) {
 		this.nodeToSubsystemMap = new HashMap<>();
 		this.subsystemToNodeMap = new HashMap<>();
 		this.edgeToInterfacesMap = new HashMap<>();
-
+		
 		this.decomposition = decomposition;
 		determineInterfaces();
-
+		
 		this.graph = new AdjListGraph();
-
+		
 		ArrayList<SubsystemGraph> subsystems = this.decomposition.getSubsystems();
-
+		
 		for (SubsystemGraph subsystem : subsystems) {
 			Random random = new Random();
-
+			
 			Node subsystemNode = graph.addNode(
 					AttributeHelper.getDefaultGraphicsAttributeForNode(random.nextInt(1000), random.nextInt(1000)));
 			AttributeHelper.setLabel(subsystemNode, subsystem.getName());
 			AttributeHelper.setSize(subsystemNode, nodeSize, nodeSize);
-
+			
 			subsystemToNodeMap.put(subsystem, subsystemNode);
 			nodeToSubsystemMap.put(subsystemNode, subsystem);
 		}
-
+		
 		for (int i = 0; i < this.decomposition.getSubsystems().size(); i++) {
 			for (int j = i + 1; j < this.decomposition.getSubsystems().size(); j++) {
 				SubsystemGraph subsystem1 = this.decomposition.getSubsystems().get(i);
@@ -118,7 +113,7 @@ public class OverviewGraph {
 					Node targetNode = subsystemToNodeMap.get(subsystem2);
 					Edge addedEdge = graph.addEdge(sourceNode, targetNode, false,
 							AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
-
+					
 					ArrayList<Node> interfaces = new ArrayList<Node>();
 					interfaces.addAll(getInterfaceNodes(subsystem1, subsystem2));
 					interfaces.addAll(getInterfaceNodes(subsystem2, subsystem1));
@@ -127,32 +122,32 @@ public class OverviewGraph {
 			}
 		}
 		updateEdgeThickness();
-
+		
 		// TODO: Create graph! Perhaps using determineInterfaces() to achieve it!
-
+		
 		// TODO Create interface maps
 		// TODO Construct nodeToSubsystem map during construction of graph.
 	}
-
+	
 	/**
 	 * @return the nodeSize
 	 */
 	public int getNodeSize() {
 		return nodeSize;
 	}
-
+	
 	public SubsystemGraph getSubsystemGraphOfNode(Node node) {
 		return this.nodeToSubsystemMap.get(node);
 	}
-
+	
 	public Node getNodeOfSubsystem(SubsystemGraph subsystem) {
 		return this.subsystemToNodeMap.get(subsystem);
 	}
-
+	
 	public ArrayList<Node> getInterfaceNodes(SubsystemGraph subsystem1, SubsystemGraph subsystem2) {
 		return this.interfaceMap.get(subsystem1).get(subsystem2);
 	}
-
+	
 	public ArrayList<SubsystemGraph> getSelectedSubsystems() {
 		EditorSession editorSession = null;
 		for (EditorSession es : MainFrame.getInstance().getEditorSessions()) {
@@ -162,22 +157,22 @@ public class OverviewGraph {
 			}
 		}
 		Collection<Node> selectedNodes = editorSession.getSelectionModel().getActiveSelection().getNodes();
-
+		
 		ArrayList<SubsystemGraph> selectedSubsystems = new ArrayList<>();
-
+		
 		for (Node node : selectedNodes) {
 			selectedSubsystems.add(this.nodeToSubsystemMap.get(node));
 		}
-
+		
 		return selectedSubsystems;
 	}
-
+	
 	/**
 	 * This registers a selection listener for the selection information in the
 	 * panel.
 	 */
 	public void registerSelectionListener() {
-
+		
 		EditorSession editorSession = null;
 		for (EditorSession es : MainFrame.getInstance().getEditorSessions()) {
 			if (es.getGraph() == this.graph) {
@@ -186,16 +181,16 @@ public class OverviewGraph {
 			}
 		}
 		editorSession.getSelectionModel().addSelectionListener(new SelectionListener() {
-
+			
 			public void selectionListChanged(SelectionEvent e) {
 				// Do nothing.
 			}
-
+			
 			public void selectionChanged(SelectionEvent e) {
 				Collection<Edge> edges = e.getSelection().getEdges();
 				Collection<Node> nodes = e.getSelection().getNodes();
 				LMMETab tab = LMMEController.getInstance().getTab();
-
+				
 				if ((edges.size() == 1) && (nodes.size() == 0)) {
 					Edge edge = edges.iterator().next();
 					ArrayList<String> names = new ArrayList<String>();
@@ -214,9 +209,9 @@ public class OverviewGraph {
 				}
 			}
 		});
-
+		
 	}
-
+	
 	/**
 	 * This method determines the interfaces in the overview graph. Interfaces in
 	 * this case refers to species that act as connection between subsystems. In
@@ -227,7 +222,7 @@ public class OverviewGraph {
 	 */
 	private void determineInterfaces() {
 		ArrayList<SubsystemGraph> subsystems = this.decomposition.getSubsystems();
-
+		
 		// Initialise HashMap(s)
 		interfaceMap = new HashMap<>();
 		for (SubsystemGraph subsystem1 : subsystems) {
@@ -240,7 +235,7 @@ public class OverviewGraph {
 			}
 			interfaceMap.put(subsystem1, hmap);
 		}
-
+		
 		for (Node speciesNode : LMMEController.getInstance().getCurrentSession().getBaseGraph().getSpeciesNodes()) {
 			Collection<Node> inneighbors = speciesNode.getAllInNeighbors();
 			Collection<Node> outneighbors = speciesNode.getAllOutNeighbors();
@@ -261,24 +256,24 @@ public class OverviewGraph {
 			}
 		}
 	}
-
+	
 	public Graph getGraph() {
 		return graph;
 	}
-
+	
 	// public HashMap<SubsystemGraph, HashMap<SubsystemGraph, ArrayList<Node>>>
 	// getInterfaceMap() {
 	// return interfaceMap;
 	// }
-
+	
 	// public ArrayList<String> getInterfaces() {
 	// return interfaces;
 	// }
-
+	
 	public MMDecomposition getDecomposition() {
 		return decomposition;
 	}
-
+	
 	/**
 	 * Updates the edge thicknesses in the overview graph according to the user
 	 * settings in the tab.
@@ -296,12 +291,12 @@ public class OverviewGraph {
 				AttributeHelper.setFrameThickNess(edge, -1.0);
 			}
 		}
-
+		
 		if (LMMEViewManagement.getInstance().getOverviewFrame() != null) {
 			DefaultEditPanel.issueCompleteRedrawForView(LMMEViewManagement.getInstance().getOverviewFrame().getView(),
 					LMMEViewManagement.getInstance().getOverviewFrame().getView().getGraph());
 		}
-
+		
 	}
-
+	
 }
