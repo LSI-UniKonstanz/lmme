@@ -226,6 +226,8 @@ public class LMMEController {
 				JOptionPane.showMessageDialog(null, "There are no subsystems selected in the overview graph.");
 				return;
 			}
+		} else {
+			JOptionPane.showMessageDialog(null, "There was no overview graph constructed so far.");
 		}
 		
 	}
@@ -255,44 +257,49 @@ public class LMMEController {
 	 */
 	public void transformToSbgnAction() {
 		
-		try {
-			Class<?> SBMLTranslationMode = Class.forName("org.sbgned.translation.SBMLTranslationMode", true,
-					InstanceLoader.getCurrentLoader());
-			Object[] enumConstants = SBMLTranslationMode.getEnumConstants();
-			Class<?> SBMLTranslation = Class.forName("org.sbgned.translation.SBMLTranslation", true,
-					InstanceLoader.getCurrentLoader());
-			Constructor<?> constructor = SBMLTranslation.getDeclaredConstructor(SBMLTranslationMode);
-			// enumConstants[0] INTERACTIVE, enumConstants[1] NONINTERACTIVE
-			Object instance = constructor.newInstance(enumConstants[1]);
-			
-			GraffitiInternalFrame gif = LMMEViewManagement.getInstance().getSubsystemFrame();
-			MainFrame.getInstance().setActiveSession(gif.getSession(), gif.getView());
-			
-			// runs as algorithm to get the current graph
-			GravistoService.getInstance().runAlgorithm((Algorithm) instance, null);
-			GraphHelper.issueCompleteRedrawForActiveView();
-			
-		} catch (ClassNotFoundException e) {
-			JOptionPane.showMessageDialog(null,
-					"Could not find SBGN-ED Add-on. Please make sure that it is installed before using this function.");
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		GraffitiInternalFrame gif = LMMEViewManagement.getInstance().getSubsystemFrame();
+		
+		if (gif != null) {
+			try {
+				Class<?> SBMLTranslationMode = Class.forName("org.sbgned.translation.SBMLTranslationMode", true,
+						InstanceLoader.getCurrentLoader());
+				Object[] enumConstants = SBMLTranslationMode.getEnumConstants();
+				Class<?> SBMLTranslation = Class.forName("org.sbgned.translation.SBMLTranslation", true,
+						InstanceLoader.getCurrentLoader());
+				Constructor<?> constructor = SBMLTranslation.getDeclaredConstructor(SBMLTranslationMode);
+				// enumConstants[0] INTERACTIVE, enumConstants[1] NONINTERACTIVE
+				Object instance = constructor.newInstance(enumConstants[1]);
+				
+				MainFrame.getInstance().setActiveSession(gif.getSession(), gif.getView());
+				
+				// runs as algorithm to get the current graph
+				GravistoService.getInstance().runAlgorithm((Algorithm) instance, null);
+				GraphHelper.issueCompleteRedrawForActiveView();
+				
+			} catch (ClassNotFoundException e) {
+				JOptionPane.showMessageDialog(null,
+						"Could not find SBGN-ED Add-on. Please make sure that it is installed before using this function.");
+			} catch (NoSuchMethodException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InstantiationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			JOptionPane.showMessageDialog(null, "There are currently no subsystems shown in the subsystems view (right side).");
 		}
 		
 	}
