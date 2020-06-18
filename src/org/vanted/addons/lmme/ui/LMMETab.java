@@ -641,6 +641,8 @@ public class LMMETab extends InspectorTab {
 						checkbox2nodeMap.put(speciesCheckBox, speciesAbove.get(i));
 					}
 					clonableSpeciesFrame.setVisible(true);
+				} else {
+					JOptionPane.showMessageDialog(null, "No base graph was set.");
 				}
 			}
 		});
@@ -677,6 +679,8 @@ public class LMMETab extends InspectorTab {
 					chartFrame.setSize(800, 500);
 					chartFrame.setLocationRelativeTo(null);
 					chartFrame.setVisible(true);
+				} else {
+					JOptionPane.showMessageDialog(null, "No base graph was set.");
 				}
 			}
 		});
