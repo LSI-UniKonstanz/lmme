@@ -57,8 +57,9 @@ import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBMLSpeciesHelper;
 
 /**
- * This class controls and coordinates the actions of LMME. It implements the
- * action listeners for the main button functions in the tab and maintains the
+ * This class controls and coordinates the actions of LMME.
+ * <p>
+ * It implements the action listeners for the main button functions in the tab and maintains the
  * available layout and decomposition algorithms.
  * 
  * @author Michael Aichem
@@ -72,10 +73,26 @@ public class LMMEController {
 	
 	private LMMETab tab;
 	
+	/**
+	 * A {@code HashMap} that maps the name as {@code String} to the actual decomposition method object as {@code MMDecompositionAlgorithm}.
+	 */
 	private HashMap<String, MMDecompositionAlgorithm> decompositionAlgorithmsMap = new HashMap<>();
+	
+	/**
+	 * A {@code HashMap} that maps the name as {@code String} to the actual overview layout method object as {@code MMOverviewLayout}.
+	 */
 	private HashMap<String, MMOverviewLayout> overviewLayoutsMap = new HashMap<>();
+	
+	/**
+	 * A {@code HashMap} that maps the name as {@code String} to the actual subsystem graph layout method object as {@code MMSubsystemLayout}.
+	 */
 	private HashMap<String, MMSubsystemLayout> subsystemLayoutsMap = new HashMap<>();
 	
+	/**
+	 * The constructor of the controller.
+	 * <p>
+	 * During execution, all objects for the decomposition and layout methods are created and put in the respective {@code HashMap}s.
+	 */
 	private LMMEController() {
 		
 		currentSession = new LMMESession();
@@ -143,6 +160,11 @@ public class LMMEController {
 		this.tab = tab;
 	}
 	
+	/**
+	 * Implements the action for the 'Set Model' button in the Add-On tab.
+	 * <p>
+	 * The currently selected SBML model is set as {@link BaseGraph} of the current session.
+	 */
 	public void setModelAction() {
 		if (this.currentSession.isModelSet()) {
 			// 0=Yes, 1=No, -1=window closed
@@ -172,6 +194,12 @@ public class LMMEController {
 		}
 	}
 	
+	/**
+	 * Implements the action for the 'Show Overview Graph' button in the Add-On tab.
+	 * <p>
+	 * Using the {@link BaseGraph} of the {@link #currentSession}, the selected decomposition is performed and the overview graph is created and drawn according
+	 * to the selected layout method..
+	 */
 	public void showOverviewGraphAction() {
 		if (this.currentSession.isModelSet()) {
 			if (this.currentSession.isOverviewGraphConstructed()) {
@@ -214,6 +242,11 @@ public class LMMEController {
 		
 	}
 	
+	/**
+	 * Implements the action for the 'Show Selected Subsystems' button in the Add-On tab.
+	 * <p>
+	 * The selected subsystem nodes are read and the {@link SubsystemGraph} is constructed and laid out according to the selected layout method.
+	 */
 	public void showSubsystemGraphsAction() {
 		if (this.currentSession.getOverviewGraph() != null) {
 			ArrayList<SubsystemGraph> selectedSubsystems = this.currentSession.getOverviewGraph().getSelectedSubsystems();
@@ -232,6 +265,17 @@ public class LMMEController {
 		
 	}
 	
+	/**
+	 * Implements the action for the 'Over-Representation Analysis' button in the Add-On tab.
+	 * <p>
+	 * The Over-Representation Analysis is performed and the results are highlighted in the overview graph.
+	 * 
+	 * @param pathToDifferentiallyExpressedFile
+	 *           the path to the differentially expressed metabolites file in the local file system
+	 * @param pathToReferenceFile
+	 *           the path to the reference metabolites file in the local file system, may be null
+	 * @throws IOException
+	 */
 	public void oraAction(String pathToDifferentiallyExpressedFile, String pathToReferenceFile) throws IOException {
 		
 		if (this.currentSession.isOverviewGraphConstructed()) {
@@ -249,11 +293,9 @@ public class LMMEController {
 	}
 	
 	/**
-	 * This method translates the model to SBGN if the SBGN-ED addon is available.
-	 * TODO: move translation to background thread, runs currently in main thread
-	 * TODO: provide proper error message to user if method is not available because
-	 * SBGN-ED addon is not available OR deactivate button TODO: currently the
-	 * original graph is translated to SBGN, maybe translate the copy?
+	 * Implements the action for the 'Translate to SBGN' button in the Add-On tab.
+	 * <p>
+	 * Translates the representation of the {@link SubsystemGraph} to SBGN if the SBGN-ED add-on is available.
 	 */
 	public void transformToSbgnAction() {
 		
@@ -304,11 +346,19 @@ public class LMMEController {
 		
 	}
 	
+	/**
+	 * Resets the whole session.
+	 */
 	private void resetSession() {
 		currentSession = new LMMESession();
 		this.tab.updateGUI();
 	}
 	
+	/**
+	 * Partially resets the session.
+	 * <p>
+	 * The session is reseted, except that the selected model is kept and a new, clean {@link BaseGraph} is constructed from the latter.
+	 */
 	public void partiallyResetSession() {
 		Graph originalGraph = currentSession.getBaseGraph().getOriginalGraph();
 		currentSession = new LMMESession(new BaseGraph(originalGraph));

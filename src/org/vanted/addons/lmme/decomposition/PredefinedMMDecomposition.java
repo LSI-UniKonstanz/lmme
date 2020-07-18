@@ -34,7 +34,9 @@ import org.vanted.addons.lmme.ui.LMMETab;
 /**
  * This method is based on an existing decomposition of the model, which is
  * contained in the underlying SBML file of the model in the form of reaction
- * notes. Reactions in this case are required to have assigned the name of the
+ * notes.
+ * <p>
+ * Reactions in this case are required to have assigned the name of the
  * subsystem that they belong to.
  *
  * @author Michael Aichem
@@ -50,9 +52,7 @@ public class PredefinedMMDecomposition extends MMDecompositionAlgorithm {
 	
 	private final String ATTRIBUTE_NAME = "predefinedSubsystem";
 	
-	/**
-	 * @return
-	 */
+	@Override
 	protected ArrayList<SubsystemGraph> runSpecific(HashSet<Node> alreadyClassifiedNodes) {
 		
 		LMMETools.getInstance().readNotes(this.getSelectedTag(), this.ATTRIBUTE_NAME);
@@ -61,16 +61,12 @@ public class PredefinedMMDecomposition extends MMDecompositionAlgorithm {
 		
 	}
 	
-	/**
-	 * @return
-	 */
+	@Override
 	public boolean requiresCloning() {
 		return true;
 	}
 	
-	/**
-	 * @return
-	 */
+	@Override
 	public FolderPanel getFolderPanel() {
 		
 		if (this.fp != null) {
@@ -86,9 +82,7 @@ public class PredefinedMMDecomposition extends MMDecompositionAlgorithm {
 		return fp;
 	}
 	
-	/**
-	 * 
-	 */
+	@Override
 	public void updateFolderPanel() {
 		if (this.cbTag == null) {
 			this.cbTag = createComboBox();
@@ -151,13 +145,12 @@ public class PredefinedMMDecomposition extends MMDecompositionAlgorithm {
 		}
 	}
 	
-	/**
-	 * @return
-	 */
+	@Override
 	public String getName() {
 		return "Predefined Decomposition";
 	}
 	
+	@Override
 	public boolean requiresTransporterSubsystem() {
 		return false;
 	}

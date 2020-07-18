@@ -40,18 +40,35 @@ import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBML_Constants;
 
 /**
- * Abstract class that needs to be extended whenever a new decomposition method
- * is to be implemented.
+ * Abstract class representing a decomposition method.
+ * <p>
+ * This class needs to be extended whenever a new decomposition method is to be implemented.
  * 
  * @author Michael Aichem
  */
 public abstract class MMDecompositionAlgorithm {
 	
-	// Returns arraylist of subsystems, the subsystems itself should only contain
-	// references to the basegraph.
+	/**
+	 * This method contains the specific procedure of the decomposition.
+	 * <p>
+	 * It will be placed within the broader procedure in the {@link #run(boolean)} method.
+	 * 
+	 * @param alreadyClassifiedNodes
+	 *           a list of nodes that have been classified already
+	 * @return a list of {@link SubsystemGraph}s constituting a decomposition
+	 */
 	protected abstract ArrayList<SubsystemGraph> runSpecific(HashSet<Node> alreadyClassifiedNodes);
 	
-	// returns decomposition?
+	/**
+	 * The overall method that creates a decomposition.
+	 * <p>
+	 * Within this method, cloning and specific decomposition are performed, and, if appropriate, the transporter and
+	 * default subsystems are computed and added.
+	 * 
+	 * @param addTransporterSubsystem
+	 *           whether to add the transporter subsystem
+	 * @return an {@link MMDecomposition} object representing the constructed decomposition
+	 */
 	public MMDecomposition run(boolean addTransporterSubsystem) {
 		
 		LMMESession currentSession = LMMEController.getInstance().getCurrentSession();
@@ -86,10 +103,13 @@ public abstract class MMDecompositionAlgorithm {
 		}
 		
 		return decomposition;
-		// todo combine them to create a Decomposition.
-		// possibly create the additional subsystem
 	}
 	
+	/**
+	 * Determines the transporter subsystem.
+	 * 
+	 * @return a {@link SubsystemGraph} representing the transporter subsystem
+	 */
 	private SubsystemGraph determineTransporterSubsystem() {
 		HashSet<Node> speciesNodes = new HashSet<>();
 		HashSet<Node> reactionNodes = new HashSet<>();
@@ -125,6 +145,13 @@ public abstract class MMDecompositionAlgorithm {
 		return new SubsystemGraph(LMMEConstants.TRANSPORTER_SUBSYSTEM, speciesNodes, reactionNodes, edges);
 	}
 	
+	/**
+	 * Determines the default subsystem.
+	 * 
+	 * @param decomposition
+	 *           the current decomposition
+	 * @return a {@link SubsystemGraph} representing the default subsystem
+	 */
 	private SubsystemGraph determineDefaultSubsystem(MMDecomposition decomposition) {
 		HashSet<Node> speciesNodes = new HashSet<>();
 		HashSet<Node> reactionNodes = new HashSet<>();
@@ -150,6 +177,17 @@ public abstract class MMDecompositionAlgorithm {
 		}
 	}
 	
+	/**
+	 * Legacy version of a method to split the default subsystem in its conencted components.
+	 * <p>
+	 * Would need a review before usage.
+	 * 
+	 * @deprecated
+	 * @param decomposition
+	 * @param defaultSubsystem
+	 * @param threshold
+	 * @return
+	 */
 	private ArrayList<SubsystemGraph> splitDefaultSubsystem(MMDecomposition decomposition,
 			SubsystemGraph defaultSubsystem, int threshold) {
 		
@@ -210,6 +248,22 @@ public abstract class MMDecompositionAlgorithm {
 		return subsystems;
 	}
 	
+	/**
+	 * Creates subsystems from the reaction attributes.
+	 * <p>
+	 * The specified {@code attributeName} is used to distribute the reactions to subsystems. Every unique value of the attribute constitutes a subsystem which
+	 * gets assigned all corresponding reactions.
+	 * 
+	 * @param attributeName
+	 *           the name of the attribute serving as subsystem indicator
+	 * @param considerSeparator
+	 *           whether to consider a separating character within this attribute
+	 * @param separator
+	 *           the separating character
+	 * @param alreadyClassifiedNodes
+	 *           a list of nodes that have been classified already
+	 * @return a list of {@link SubsystemGraph}s constituting a decomposition
+	 */
 	protected ArrayList<SubsystemGraph> determineSubsystemsFromReactionAttributes(String attributeName,
 			boolean considerSeparator, String separator, HashSet<Node> alreadyClassifiedNodes) {
 		
@@ -273,12 +327,32 @@ public abstract class MMDecompositionAlgorithm {
 		return res;
 	}
 	
+	/**
+	 * Returns whether this method expects a cloning step prior to the specific procedure.
+	 * 
+	 * @return whether this method expects a cloning step prior to the specific procedure
+	 */
 	public abstract boolean requiresCloning();
 	
+	/**
+	 * Returns whether this method requires the transporter subsystem to be determined.
+	 * 
+	 * @return whether this method requires the transporter subsystem to be determined
+	 */
 	public abstract boolean requiresTransporterSubsystem();
 	
+	/**
+	 * Returns the {@code FolderPanel} of this method.
+	 * <p>
+	 * The {@code FolderPanel} contains all settings relevant to this method and will be placed in the add-on tab.
+	 * 
+	 * @return the {@code FolderPanel} of this method
+	 */
 	public abstract FolderPanel getFolderPanel();
 	
+	/**
+	 * Updates the {@code FolderPanel}.
+	 */
 	public abstract void updateFolderPanel();
 	
 	public abstract String getName();

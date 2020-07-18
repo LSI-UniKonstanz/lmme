@@ -1,19 +1,16 @@
 /*******************************************************************************
  * LMME is a VANTED Add-on for the exploration of large metabolic models.
  * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
- * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.vanted.addons.lmme.layout;
 
@@ -29,25 +26,28 @@ import org.graffiti.graph.Node;
  * @author Michael Aichem
  */
 public class MMLayoutTools {
-
+	
 	private static MMLayoutTools instance;
-
+	
 	private MMLayoutTools() {
+		
 	}
-
+	
 	public static synchronized MMLayoutTools getInstance() {
 		if (MMLayoutTools.instance == null) {
 			MMLayoutTools.instance = new MMLayoutTools();
 		}
 		return MMLayoutTools.instance;
 	}
-
+	
 	/**
-	 * This method applies the barycenter heuristic for two layer crossing
+	 * Applies the barycenter heuristic for two layer crossing
 	 * minimisation, choosing the best result out of five.
 	 * 
-	 * @param layer1 First layer.
-	 * @param layer2 Second layer.
+	 * @param layer1
+	 *           the first layer
+	 * @param layer2
+	 *           the second layer
 	 */
 	public void crossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2) {
 		ArrayList<Node> currentMinL1;
@@ -75,14 +75,17 @@ public class MMLayoutTools {
 			layer2.set(i, currentMinL2.get(i));
 		}
 	}
-
+	
 	/**
-	 * This is a helper function for the crossing minimisation. It calculates the
+	 * A helper function for the crossing minimisation. It calculates the
 	 * barycenters of the nodes and sorts the layers according to their barycenters.
 	 * 
-	 * @param layer1            First layer.
-	 * @param layer2            Second layer.
-	 * @param numberOfCrossings The current best result.
+	 * @param layer1
+	 *           first layer
+	 * @param layer2
+	 *           second layer
+	 * @param numberOfCrossings
+	 *           the current best result
 	 */
 	private void crossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2, int numberOfCrossings) {
 		HashMap<Node, Double> node2barycenter = new HashMap<>();
@@ -105,13 +108,15 @@ public class MMLayoutTools {
 			crossingMin(layer2, layer1, newNumberOfCrossings);
 		}
 	}
-
+	
 	/**
-	 * This method counts the number of crossings that occur between the two layers.
+	 * Counts the number of crossings that occur between two layers.
 	 * 
-	 * @param layer1 First layer.
-	 * @param layer2 Second layer.
-	 * @return The number of crossings between the two layers.
+	 * @param layer1
+	 *           first layer
+	 * @param layer2
+	 *           second layer
+	 * @return the number of crossings between the two layers
 	 */
 	private int numberOfCrossings(ArrayList<Node> layer1, ArrayList<Node> layer2) {
 		int res = 0;
@@ -130,14 +135,16 @@ public class MMLayoutTools {
 		}
 		return res;
 	}
-
+	
 	/**
-	 * This method computes for the given node the barycenter of the index positions
+	 * Computes for the given node the barycenter of the index positions
 	 * of all its neighbors in the given neighbor array.
 	 * 
-	 * @param node         The node for which the barycenter is to be computed.
-	 * @param neighborList The list in which the neighbors are contained.
-	 * @return The barycenter of the index positions of the nodes neighbors.
+	 * @param node
+	 *           the node for which the barycenter is to be computed
+	 * @param neighborList
+	 *           the list of neighbors
+	 * @return the barycenter of the index positions of the node's neighbors
 	 */
 	private double getBarycenter(Node node, ArrayList<Node> neighborList) {
 		double res = 0.0;
@@ -147,5 +154,5 @@ public class MMLayoutTools {
 		res /= ((double) node.getNeighbors().size());
 		return res;
 	}
-
+	
 }

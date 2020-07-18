@@ -37,8 +37,7 @@ import org.vanted.addons.lmme.ui.LMMETab;
 import org.vanted.addons.lmme.ui.LMMEViewManagement;
 
 /**
- * Maintains the generated overview graph, which models the relationships
- * between the individual subsystems.
+ * Maintains the generated overview graph, which models the relationships between the individual subsystems.
  *
  * @author Michael Aichem
  */
@@ -49,8 +48,6 @@ public class OverviewGraph {
 	private Graph graph;
 	
 	private MMDecomposition decomposition;
-	
-	// private HashMap<Edge, ArrayList<Node>> interfaceMap = new HashMap<>();
 	
 	private HashMap<SubsystemGraph, HashMap<SubsystemGraph, ArrayList<Node>>> interfaceMap;
 	
@@ -68,16 +65,19 @@ public class OverviewGraph {
 	private HashMap<SubsystemGraph, Node> subsystemToNodeMap;
 	
 	/**
-	 * A map that maps en edge to the interfaces between the corresponding
-	 * subsystems.
+	 * A map that maps an edge to the interfaces between the corresponding subsystems, justifying the edge.
 	 */
 	private HashMap<Edge, ArrayList<Node>> edgeToInterfacesMap;
 	
-	public OverviewGraph(Graph graph) {
-		// this.graph = graph;
-		// determineInterfaces();
-	}
-	
+	/**
+	 * Constructor for the overview graph.
+	 * <p>
+	 * During execution, the decomposition is processed to create an overview graph. This is done by creating one node per subsystem and successively determining
+	 * interfaces between the given subsystems and adding respective edges connecting the subsystems.
+	 * 
+	 * @param decomposition
+	 *           the underlying decomposition
+	 */
 	public OverviewGraph(MMDecomposition decomposition) {
 		this.nodeToSubsystemMap = new HashMap<>();
 		this.subsystemToNodeMap = new HashMap<>();
@@ -122,11 +122,6 @@ public class OverviewGraph {
 			}
 		}
 		updateEdgeThickness();
-		
-		// TODO: Create graph! Perhaps using determineInterfaces() to achieve it!
-		
-		// TODO Create interface maps
-		// TODO Construct nodeToSubsystem map during construction of graph.
 	}
 	
 	/**
@@ -136,18 +131,44 @@ public class OverviewGraph {
 		return nodeSize;
 	}
 	
+	/**
+	 * Gets the {@link SubsystemGraph} of the given node within the overview graph.
+	 * 
+	 * @param node
+	 *           the node within the overview graph
+	 * @return the {@link SubsystemGraph} of the given node
+	 */
 	public SubsystemGraph getSubsystemGraphOfNode(Node node) {
 		return this.nodeToSubsystemMap.get(node);
 	}
 	
+	/**
+	 * Gets the node within the overview graph of the specified subsystem.
+	 * 
+	 * @param subsystem
+	 *           the subsystem
+	 * @return the corresponding node within the overview graph
+	 */
 	public Node getNodeOfSubsystem(SubsystemGraph subsystem) {
 		return this.subsystemToNodeMap.get(subsystem);
 	}
 	
+	/**
+	 * Gets the list of interface metabolites that lie between the two specified subsystems.
+	 * 
+	 * @param subsystem1
+	 * @param subsystem2
+	 * @return the list of interface metabolites between the subsystems
+	 */
 	public ArrayList<Node> getInterfaceNodes(SubsystemGraph subsystem1, SubsystemGraph subsystem2) {
 		return this.interfaceMap.get(subsystem1).get(subsystem2);
 	}
 	
+	/**
+	 * Gets a list of subsystems whose nodes have been selected by the user in the overview graph representation.
+	 * 
+	 * @return a list of subsystems whose nodes have been selected by the user
+	 */
 	public ArrayList<SubsystemGraph> getSelectedSubsystems() {
 		EditorSession editorSession = null;
 		for (EditorSession es : MainFrame.getInstance().getEditorSessions()) {
@@ -168,8 +189,7 @@ public class OverviewGraph {
 	}
 	
 	/**
-	 * This registers a selection listener for the selection information in the
-	 * panel.
+	 * Registers a selection listener for the selection information in the panel.
 	 */
 	public void registerSelectionListener() {
 		
@@ -213,8 +233,9 @@ public class OverviewGraph {
 	}
 	
 	/**
-	 * This method determines the interfaces in the overview graph. Interfaces in
-	 * this case refers to species that act as connection between subsystems. In
+	 * Determines the interfaces in the overview graph.
+	 * <p>
+	 * Interfaces in this case refers to species that act as connection between subsystems. In
 	 * this implementation, a species s is considered to be an interface between
 	 * subsystems S1 and S2 if and only if s has at least one in-neighbor from S1
 	 * and at least one out-neighbor from S2. During this method,
@@ -260,15 +281,6 @@ public class OverviewGraph {
 	public Graph getGraph() {
 		return graph;
 	}
-	
-	// public HashMap<SubsystemGraph, HashMap<SubsystemGraph, ArrayList<Node>>>
-	// getInterfaceMap() {
-	// return interfaceMap;
-	// }
-	
-	// public ArrayList<String> getInterfaces() {
-	// return interfaces;
-	// }
 	
 	public MMDecomposition getDecomposition() {
 		return decomposition;

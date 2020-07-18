@@ -23,6 +23,7 @@ import org.vanted.addons.lmme.graphs.OverviewGraph;
 
 /**
  * A circular layout for the {@link OverviewGraph}.
+ * <p>
  * All nodes are placed on a circle. A heuristic approach is applied to reduce
  * edge crossings by changing the order of the nodes on the circle.
  * 
@@ -36,9 +37,7 @@ public class CircularMMLayout implements MMOverviewLayout {
 		layoutTools = MMLayoutTools.getInstance();
 	}
 	
-	/**
-	 * 
-	 */
+	@Override
 	public void layOutAsOverview(Graph graph) {
 		
 		ArrayList<Node> layer1 = new ArrayList<>();
@@ -75,11 +74,6 @@ public class CircularMMLayout implements MMOverviewLayout {
 		}
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.vanted.addons.gsmmexplorer.layout.GsmmOverviewLayout#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Circular";
