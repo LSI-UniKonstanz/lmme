@@ -7,7 +7,7 @@
         <name>lmme</name>
         <main>org.vanted.addons.lmme.LMMEAddon</main>
         <version>0.1</version>
-        <compatibility>2.5</compatibility>
+        <compatibility>2.7</compatibility>
         <available>http://www.vanted.org</available>
     </plugindesc>
 </plugin>

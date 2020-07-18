@@ -51,7 +51,7 @@ import de.ipk_gatersleben.ag_nw.graffiti.services.web.RestService;
 import info.clearthought.layout.TableLayout;
 
 /**
- * This method uses the KEGG IDs, that have been assigned to the reactions, uses
+ * This method uses the KEGG IDs, that have been assigned to the reactions, and
  * the information from KEGG, which reactions belong to which pathways, to
  * finally determine a set of KEGG pathways that are very likely to be present
  * in the model at hand.
@@ -86,9 +86,6 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 	
 	private int packageStart;
 	
-	/**
-	 * 
-	 */
 	public KeggMMDecomposition() {
 		this.node2possibleSubsystems = new HashMap<>();
 		this.subsystem2number = new HashMap<>();
@@ -114,8 +111,9 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 	
 	/**
 	 * For each reaction that has a KEGG ID, an HTTP request to KEGG is sent,
-	 * querying the pathways that belong to the reaction. These are then stored in
-	 * the the HashMap {@link node2possibleSubsystems}.
+	 * querying the pathways that belong to the reaction.
+	 * <p>
+	 * These are then stored in the the HashMap {@link node2possibleSubsystems}.
 	 */
 	private void request() {
 		
@@ -197,9 +195,16 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 	
 	/**
 	 * This method stores the results from the KEGG requests in the map
-	 * {@link node2possibleSubsystems}. The method thus therefore expects two lists:
-	 * a list of reactions and a list of request result Strings, that match position
-	 * by position. This method assumes both lists to have the same length.
+	 * {@link node2possibleSubsystems}.
+	 * <p>
+	 * The method thus therefore expects two lists:
+	 * <ul>
+	 * <li>a list of reactions and
+	 * <li>a list of request result Strings,
+	 * </ul>
+	 * that match position by position.
+	 * <p>
+	 * This method assumes both lists to have the same length.
 	 * 
 	 * @param reactionNodes
 	 *           The nodes that have been requested
@@ -215,6 +220,8 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 	}
 	
 	/**
+	 * This method separately requests reaction by reaction.
+	 * <p>
 	 * This method also expects a list of reaction nodes but in contrast to
 	 * {@link requestPackage} it requests AND processes (stores the results in the
 	 * map {@link node2possibleSubsystems}) the nodes one by one. This is necessary
@@ -249,13 +256,17 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 	}
 	
 	/**
-	 * This method processes a single node, meaning that the given request result is
-	 * nterpreted in the context of the given reaction node and the respective
+	 * This method processes a single node.
+	 * <p>
+	 * This means that the given request result is
+	 * interpreted in the context of the given reaction node and the respective
 	 * pathway information from the request result. The pathways are then storedin
 	 * the map {@link node2possibleSubsystems}.
 	 * 
 	 * @param reactionNode
+	 *           the node that has been queried
 	 * @param requestResult
+	 *           the result of the KEGG query
 	 */
 	private void processSingleNode(Node reactionNode, String requestResult) {
 		if (requestResult != null) {
@@ -281,10 +292,14 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 			}
 		} else {
 			// TODO: proper evaluation of response once RestService returns a map instead of just a string
-			ErrorMsg.addErrorMessage("KEGG Decomposition failed: could not retrieve pathway information for reactions from KEGG database.");
+			ErrorMsg.addErrorMessage("KEGG Decomposition failed: could not retrieve pathway information for reactions "
+					+ "from KEGG database.");
 		}
 	}
 	
+	/**
+	 * Updates the numbers associated to subsystems, stating how many possible reactions may belong to a subsystem.
+	 */
 	private void updateSubsystemNumber() {
 		subsystem2number.clear();
 		for (Node reactionNode : node2possibleSubsystems.keySet()) {
@@ -298,6 +313,9 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		}
 	}
 	
+	/**
+	 * Removes those candidate subsystems that may have assigned a lesser number of reactions than specified by the user.
+	 */
 	private void removeTooSmallSubsystems() {
 		ArrayList<String> subsystemsToRemove = new ArrayList<>();
 		for (String smallSubsystem : subsystem2number.keySet()) {
@@ -313,6 +331,9 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		}
 	}
 	
+	/**
+	 * Removes reactions that do not have candidate pathways anymore.
+	 */
 	private void removeNodesWithoutSubsystem() {
 		
 		ArrayList<Node> nodesToRemove = new ArrayList<>();
@@ -327,6 +348,9 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		
 	}
 	
+	/**
+	 * Processes the not-yet-confirmed subsystem that would currently have the most reactions assigned to.
+	 */
 	private void extractNodesFromHugestSubsystem() {
 		
 		if (subsystem2number.isEmpty()) {
@@ -359,19 +383,11 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		
 	}
 	
-	/**
-	 * 
-	 */
+	@Override
 	public boolean requiresCloning() {
 		return true;
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.vanted.addons.gsmmexplorer.decomposition.GsmmDecompositionAlgorithm#
-	 * getFolderPanel()
-	 */
 	@Override
 	public FolderPanel getFolderPanel() {
 		
@@ -429,6 +445,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		return fp;
 	}
 	
+	@Override
 	public void updateFolderPanel() {
 		if (this.cbTag == null) {
 			this.cbTag = createComboBox();
@@ -491,13 +508,12 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 		}
 	}
 	
-	/**
-	 * 
-	 */
+	@Override
 	public String getName() {
 		return "KEGG Decomposition";
 	}
 	
+	@Override
 	public boolean requiresTransporterSubsystem() {
 		return false;
 	}

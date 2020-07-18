@@ -127,6 +127,7 @@ public class CompartmentMMDecomposition extends MMDecompositionAlgorithm {
 		return "Compartment Decomposition";
 	}
 	
+	@Override
 	public boolean requiresTransporterSubsystem() {
 		return true;
 	}

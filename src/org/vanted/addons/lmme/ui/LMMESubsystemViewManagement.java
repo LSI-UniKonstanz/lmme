@@ -1,19 +1,16 @@
 /*******************************************************************************
  * LMME is a VANTED Add-on for the exploration of large metabolic models.
  * Copyright (C) 2020 Chair for Life Science Informatics, University of Konstanz
- * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.vanted.addons.lmme.ui;
 
@@ -29,35 +26,34 @@ import org.graffiti.graph.Edge;
 import org.graffiti.graph.Graph;
 import org.graffiti.graph.Node;
 import org.vanted.addons.lmme.core.LMMEController;
-import org.vanted.addons.lmme.core.LMMESession;
 import org.vanted.addons.lmme.graphs.BaseGraph;
 import org.vanted.addons.lmme.graphs.SubsystemGraph;
 
-import de.ipk_gatersleben.ag_nw.graffiti.NodeTools;
-import de.ipk_gatersleben.ag_nw.graffiti.plugins.editcomponents.cluster_colors.ClusterColorAttribute;
-import de.ipk_gatersleben.ag_nw.graffiti.plugins.layouters.pattern_springembedder.clusterCommands.PajekClusterColor;
-
 /**
- * Manages the subsystem view during the exploration phase. Among others, it is
- * responsible for the resonable combination of selected subsystem graphs to a
+ * Manages the subsystem view during the exploration phase.
+ * <p>
+ * Among others, it is responsible for the resonable combination of selected subsystem graphs to a
  * whole and the addition of further subsystems to an existing drawing.
  * 
  * @author Michael Aichem
  */
 public class LMMESubsystemViewManagement {
-
+	
 	private static LMMESubsystemViewManagement instance;
-
+	
 	private ArrayList<SubsystemGraph> currentSubsystems;
-
+	
 	private Color[] colors;
-
+	
 	private Color defaultColor;
-
+	
 	private HashMap<SubsystemGraph, Color> colorMap;
-
+	
+	/**
+	 * The size of a node in the resulting drawing of the consolidated subsystem graph.
+	 */
 	private final int nodeSize = 50;
-
+	
 	private LMMESubsystemViewManagement() {
 		this.currentSubsystems = new ArrayList<>();
 		colors = new Color[] { Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.ORANGE, Color.PINK, Color.RED,
@@ -65,20 +61,32 @@ public class LMMESubsystemViewManagement {
 		defaultColor = Color.GRAY;
 		colorMap = new HashMap<>();
 	}
-
+	
 	public static synchronized LMMESubsystemViewManagement getInstance() {
 		if (LMMESubsystemViewManagement.instance == null) {
 			LMMESubsystemViewManagement.instance = new LMMESubsystemViewManagement();
 		}
 		return LMMESubsystemViewManagement.instance;
 	}
-
+	
+	/**
+	 * Draws the given subsystems in the subsystems view according to some given options.
+	 * <p>
+	 * The consolidated subsystem graph is constructed from the given subsystems.
+	 * 
+	 * @param subsystems
+	 *           the list of {@link SubsystemGraph}s to be combined into a consolidated subsystem graph
+	 * @param clearView
+	 *           whether the subsystems view has to be reset, only showing the selected subsystems. If set to {@code false}, the given subsystems will be added
+	 *           to the existing drawing.
+	 * @param useColor
+	 *           whether a color mapping shall be used between the overview graph and the subsystems view
+	 */
 	public void showSubsystems(ArrayList<SubsystemGraph> subsystems, boolean clearView, boolean useColor) {
-
+		
 		if ((LMMEViewManagement.getInstance().getSubsystemFrame() == null)
 				|| (LMMEViewManagement.getInstance().getSubsystemFrame().isClosed() == true)) {
 			clearView = true;
-//			System.out.println("Frame null oder closed");
 		}
 		if (clearView) {
 			resetLists();
@@ -106,19 +114,19 @@ public class LMMESubsystemViewManagement {
 				}
 			}
 		}
-
+		
 		updateView(useColor);
-
+		
 		for (SubsystemGraph subsystem : currentSubsystems) {
 			if (useColor) {
 				AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
 						.getNodeOfSubsystem(subsystem), colorMap.get(subsystem));
 			}
 		}
-
+		
 		HashSet<Node> speciesHashSet = new HashSet<Node>();
 		HashSet<Node> reactionsHashSet = new HashSet<Node>();
-
+		
 		for (SubsystemGraph subsystem : currentSubsystems) {
 			speciesHashSet.addAll(subsystem.getSpeciesNodes());
 			reactionsHashSet.addAll(subsystem.getReactionNodes());
@@ -126,31 +134,27 @@ public class LMMESubsystemViewManagement {
 		LMMEController.getInstance().getTab().setSubsystemInfo(currentSubsystems.size(), speciesHashSet.size(),
 				reactionsHashSet.size());
 	}
-
+	
 	/**
-	 * This method updates the view according to the list of subsystems that have to
-	 * be shown.
+	 * Internally handles the update of the drawing in the subsystems view.
+	 * 
+	 * @param useColor
+	 *           whether a color mapping shall be used between the overview graph and the subsystems view
 	 */
 	private void updateView(boolean useColor) {
-
+		
 		BaseGraph baseGraph = LMMEController.getInstance().getCurrentSession().getBaseGraph();
-
+		
 		Graph consolidatedSubsystemGraph = new AdjListGraph(
 				(CollectionAttribute) baseGraph.getOriginalGraph().getAttributes().copy());
-
+		
 		HashMap<Node, Node> nodes2newNodes = new HashMap<>();
 		HashSet<Edge> addedEdges = new HashSet<>();
 		HashSet<Node> processedInterfaces = new HashSet<>();
-
+		
 		resetOverviewGraphColoring();
-
+		
 		for (SubsystemGraph subsystem : currentSubsystems) {
-//			if (useColor) {
-//				AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
-//						.getNodeOfSubsystem(subsystem), colorMap.get(subsystem));
-//				System.out.println("Set color of " + subsystem.getName());
-//			}
-			// access and use color when creating nodes.
 			for (Node speciesNode : subsystem.getSpeciesNodes()) {
 				if (!nodes2newNodes.keySet().contains(speciesNode)) {
 					Node newNode = consolidatedSubsystemGraph.addNodeCopy(speciesNode);
@@ -180,11 +184,11 @@ public class LMMESubsystemViewManagement {
 				}
 			}
 		}
-
+		
 		for (SubsystemGraph sourceSystem : currentSubsystems) {
 			for (SubsystemGraph targetSystem : currentSubsystems) {
 				if (sourceSystem != targetSystem) {
-
+					
 					ArrayList<Node> interfaces = LMMEController.getInstance().getCurrentSession().getOverviewGraph()
 							.getInterfaceNodes(sourceSystem, targetSystem);
 					for (Node interfaceNode : interfaces) {
@@ -215,19 +219,25 @@ public class LMMESubsystemViewManagement {
 							}
 						}
 					}
-
+					
 				}
 			}
 		}
 		LMMEViewManagement.getInstance().showAsSubsystemGraph(consolidatedSubsystemGraph);
 	}
-
+	
+	/**
+	 * Resets the list of subsystems to be shown as well as the color mapping.
+	 */
 	public void resetLists() {
 		resetOverviewGraphColoring();
 		this.colorMap.clear();
 		this.currentSubsystems.clear();
 	}
-
+	
+	/**
+	 * Resets the colors of the subsystem nodes in the overview graph.
+	 */
 	public void resetOverviewGraphColoring() {
 		if (LMMEController.getInstance().getCurrentSession().isOverviewGraphConstructed()) {
 			for (SubsystemGraph subsystem : LMMEController.getInstance().getCurrentSession().getOverviewGraph()
@@ -237,12 +247,5 @@ public class LMMESubsystemViewManagement {
 			}
 		}
 	}
-
-	// TODO maintain list of currently shown subsystems, create color mapping
-
-	// TODO create artificial graph made out of node copies of the selected
-	// subsystems nodes
-
-	// TODO also add interfaces respectively, they should exist in both subsystems.
-
+	
 }

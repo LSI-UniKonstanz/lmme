@@ -339,9 +339,9 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
-	 * Creates and returns the JComponent for the Session Information.
+	 * Creates and returns the settings {@code JComponent} for the Session Information.
 	 * 
-	 * @return
+	 * @return the JComponent for the Session Information
 	 */
 	private JComponent createSessionInformationComponent() {
 		FolderPanel fpSessionInfo = new FolderPanel("Session Information", false, true, false, null);
@@ -469,9 +469,9 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
-	 * Creates and returns the JComponent for the Settings.
+	 * Creates and returns the settings {@code JComponent}.
 	 * 
-	 * @return
+	 * @return the settings {@code JComponent}
 	 */
 	private JComponent createSettingsComponent() {
 		FolderPanel fpSettings = new FolderPanel("Settings", false, true, false, null);
@@ -547,6 +547,11 @@ public class LMMETab extends InspectorTab {
 		return fpSettings;
 	}
 	
+	/*
+	 * Creates and returns the settings {@code JComponent} for the cloning.
+	 * 
+	 * @return the settings {@code JComponent} for the cloning
+	 */
 	private JComponent createCloningComponent() {
 		
 		FolderPanel fp = new FolderPanel("Cloning Species", false, true, false, null);
@@ -692,6 +697,11 @@ public class LMMETab extends InspectorTab {
 		return fp;
 	}
 	
+	/*
+	 * Creates and returns the settings {@code JComponent} for the subsystems view.
+	 * 
+	 * @return the settings {@code JComponent} for the subsystems view
+	 */
 	private JComponent createSubsystemsViewComponent() {
 		FolderPanel fp = new FolderPanel("Subsystem View", false, true, false, null);
 		
@@ -742,6 +752,12 @@ public class LMMETab extends InspectorTab {
 		return fp;
 	}
 	
+	/**
+	 * Sets the maximum value of the slider for the cloning threshold.
+	 * 
+	 * @param max
+	 *           the maximum value of the slider for the cloning threshold
+	 */
 	private void setSliderMax(int max) {
 		
 		if (max > 200) {
@@ -776,16 +792,17 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
-	 * Updates the selection info at the top of the tab. The subsystems names will
-	 * be shown as labels, while the interface names will be shown as scrollable
-	 * list.
+	 * Updates the selection info at the top of the tab.
+	 * <p>
+	 * The subsystems names will be shown as labels,
+	 * while the interface names will be shown as scrollable list.
 	 * 
 	 * @param subsystem1
-	 *           The name of the first subsystem
+	 *           the name of the first subsystem
 	 * @param subsystem2
-	 *           The name of the secons subsystem
+	 *           the name of the second subsystem
 	 * @param interfaceNames
-	 *           The interface names to be shown in a scrollable list
+	 *           the interface names to be shown in a scrollable list
 	 */
 	public void showSelectedEdgeInfo(String subsystem1, String subsystem2, ArrayList<String> interfaceNames) {
 		this.panelSelectionInformation.removeAll();
@@ -826,12 +843,17 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
-	 * Updates the selection info at the top of the tab. all information will be
-	 * shown as labels.
+	 * Updates the selection info at the top of the tab.
+	 * <p>
+	 * The name o fthe selected subsystem will be shown, as well as the number
+	 * of reactions and metabolites contained in it.
 	 * 
 	 * @param subsystemName
+	 *           the name of the selected subsystem
 	 * @param numberOfMetabolites
+	 *           the number of metabolites contained in the currently selected subsystem
 	 * @param numberOfReactions
+	 *           the number of reactions contained in the currently selected subsystem
 	 */
 	public void showSelectedSubsystemInfo(String subsystemName, int numberOfMetabolites, int numberOfReactions) {
 		this.panelSelectionInformation.removeAll();
@@ -850,8 +872,11 @@ public class LMMETab extends InspectorTab {
 	 * Sets the corresponding labels in the subsystem information panel.
 	 * 
 	 * @param numberOfSubsystems
+	 *           the number of subsystems in the current decomposition
 	 * @param numberOfMetabolites
+	 *           the number of metabolites of the model under investigation
 	 * @param numberOfReactions
+	 *           the number of reactions of the model under investigation
 	 */
 	public void setSubsystemInfo(int numberOfSubsystems, int numberOfMetabolites, int numberOfReactions) {
 		this.lblSubsystemInfoSubsystems.setText(Integer.toString(numberOfSubsystems));
@@ -872,8 +897,11 @@ public class LMMETab extends InspectorTab {
 	 * Sets the corresponding labels in the session information panel.
 	 * 
 	 * @param name
+	 *           the name of the current model
 	 * @param numberOfMetabolites
+	 *           the number of metabolites contained in the current model
 	 * @param numberOfReactions
+	 *           the number of reactions contained in the current model
 	 */
 	public void setBaseGraphInfo(String name, int numberOfMetabolites, int numberOfReactions) {
 		String nameToShow = name.length() > 25 ? name.substring(0, 24) + "..." : name;
@@ -895,6 +923,7 @@ public class LMMETab extends InspectorTab {
 	 * Sets the corresponding label in the session information panel.
 	 * 
 	 * @param numberOfSubsystems
+	 *           the number of subsystems
 	 */
 	public void setLblNumberOfSubsystems(int numberOfSubsystems) {
 		this.lblSessionInfoSubsystems.setText(Integer.toString(numberOfSubsystems));
@@ -910,7 +939,7 @@ public class LMMETab extends InspectorTab {
 	/**
 	 * Returns the currently selected decomposition method.
 	 * 
-	 * @return
+	 * @return the currently selected decomposition method
 	 */
 	public String getDecompositionMethod() {
 		return ((String) this.cbDecompMethod.getSelectedItem());
@@ -919,7 +948,7 @@ public class LMMETab extends InspectorTab {
 	/**
 	 * Returns the currently selected overview layout method.
 	 * 
-	 * @return
+	 * @return the currently selected overview layout method
 	 */
 	public String getOverviewLayoutMethod() {
 		return ((String) this.cbOverviewLayout.getSelectedItem());
@@ -928,22 +957,34 @@ public class LMMETab extends InspectorTab {
 	/**
 	 * Returns the currently selected subsystem layout method.
 	 * 
-	 * @return
+	 * @return the currently selected subsystem layout method
 	 */
 	public String getSubsystemLayoutMethod() {
 		return ((String) this.cbSubsystemLayout.getSelectedItem());
 	}
 	
+	/**
+	 * returns whether the user has selected the map to edge thickness option.
+	 * 
+	 * @return whether the user has selected the map to edge thickness option
+	 */
 	public boolean getMapToEdgeThickness() {
 		return this.ckbMapToEdgeThickness.isSelected();
 	}
 	
+	/**
+	 * returns whether the user has selected the draw edges option.
+	 * 
+	 * @return whether the user has selected the draw edges option
+	 */
 	public boolean getDrawEdges() {
 		return this.ckbDrawEdges.isSelected();
 	}
 	
 	/**
-	 * @return the ckbAddTransporterSubS
+	 * returns whether the user has selected the transporter subsystem option.
+	 * 
+	 * @return whether the user has selected the transporter subsystem option
 	 */
 	public boolean getAddTransporterSubS() {
 		return this.ckbAddTransporterSubS.isSelected();
@@ -952,27 +993,45 @@ public class LMMETab extends InspectorTab {
 	/**
 	 * Returns whether the clear subsystem view checkbox is currently selected.
 	 * 
-	 * @return
+	 * @return whether the clear subsystem view checkbox is currently selected
 	 */
 	public boolean getClearSubsystemView() {
 		return this.ckbClearSubsView.isSelected();
 	}
 	
 	/**
-	 * @return the ckbUseColorMapping
+	 * returns whether the user has selected the color mapping option.
+	 * 
+	 * @return whether the user has selected the color mapping option
 	 */
 	public boolean getCkbUseColorMapping() {
 		return this.ckbUseColorMapping.isSelected();
 	}
 	
+	/**
+	 * Gets the selected cloning species threshold.
+	 * 
+	 * @return the selected cloning species threshold
+	 */
 	public int getClonableSpeciesThreshold() {
 		return this.sliderSplitDeg.getValue();
 	}
 	
+	/**
+	 * Returns whether the clonable species list has been edited by the user.
+	 * 
+	 * @return whether the clonable species list has been edited by the user
+	 */
 	public boolean isEditedCloneList() {
 		return editedCloneList;
 	}
 	
+	/**
+	 * Sets the flag whether the clonable species list has been edited.
+	 * 
+	 * @param editedCloneList
+	 *           the flag whether the clonable species list has been edited
+	 */
 	private void setEditedCloneList(boolean editedCloneList) {
 		this.editedCloneList = editedCloneList;
 		this.lblEditedCloneList.setVisible(editedCloneList);
@@ -985,8 +1044,10 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
-	 * @return the species to be cloned. Species in the returned list are from the
-	 *         originalGraph
+	 * Returns the species to be cloned. Species in the returned list are from the
+	 * original graph.
+	 * 
+	 * @return the species to be cloned
 	 */
 	public ArrayList<Node> getClonableSpecies() {
 		ArrayList<Node> res = new ArrayList<>();
@@ -1004,7 +1065,7 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
-	 * This method grabs the current values for any GUI element that represents or
+	 * Grabs the current values for any GUI element that represents or
 	 * relies on external information and accordingly updates the appearance of
 	 * these elements.
 	 */
@@ -1036,7 +1097,7 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
-	 * This method allows to create a log message in the session information panel.
+	 * Allows to create a log message in the session information panel.
 	 * 
 	 * @param msg
 	 *           The message to be logged.
@@ -1052,13 +1113,13 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
-	 * This method adds the given element as a new row into the given FolderPanel in
+	 * Adds the given element as a new row into the given FolderPanel in
 	 * a way such that it spans the whole row
 	 * 
 	 * @param el
-	 *           The element to be added.
+	 *           the element to be added
 	 * @param panel
-	 *           The FolderPanel into which the element should be inserted.
+	 *           the FolderPanel into which the element should be inserted
 	 */
 	private static void addOneElementSpanning(JComponent el, FolderPanel panel) {
 		GuiRow gr = new GuiRow(el, null);
@@ -1067,22 +1128,22 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
-	 * This method is used to form a group of two JComponents.
+	 * Forms a group of two JComponents.
 	 * 
 	 * @param left
-	 *           The left component
+	 *           the left component
 	 * @param right
-	 *           The right component
+	 *           the right component
 	 * @param color
-	 *           The background color of the new component
+	 *           the background color of the new component
 	 * @param fill
-	 *           States whether the components should be aligned in a way that
-	 *           uses the entire horizontally available space.
+	 *           whether the components should be aligned in a way that
+	 *           uses the entire horizontally available space
 	 * @param spaced
-	 *           States whether there should be a small space separating the
-	 *           combined components.
-	 * @return The new component that results from combining the left and the right
-	 *         component.
+	 *           whether there should be a small space separating the
+	 *           combined components
+	 * @return the new component that results from combining the left and the right
+	 *         component
 	 */
 	public static JPanel combine(JComponent left, JComponent right, Color color, boolean fill, boolean spaced) {
 		JPanel combinedPanel = new JPanel();
@@ -1101,6 +1162,23 @@ public class LMMETab extends InspectorTab {
 		return combinedPanel;
 	}
 	
+	/**
+	 * Forms a group of three JComponents.
+	 * 
+	 * @param left
+	 *           the left component
+	 * @param mid
+	 *           the mid component
+	 * @param right
+	 *           the right component
+	 * @param color
+	 *           the background color of the new component
+	 * @param spaced
+	 *           whether there should be a small space separating the
+	 *           combined components
+	 * @return the new component that results from combining the left, mid and the right
+	 *         component
+	 */
 	private static JPanel combine3(JComponent left, JComponent mid, JComponent right, Color color, boolean spaced) {
 		JPanel combinedPanel = new JPanel();
 		combinedPanel
