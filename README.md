@@ -30,9 +30,9 @@ If some errors occurred during the steps described above, or if you are interest
 ## Getting Started (Development)
 1. Check out the [VANTED repository](https://github.com/LSI-UniKonstanz/vanted) and [VANTED libraries repository](https://github.com/LSI-UniKonstanz/vanted-libraries) (see also [here](https://github.com/LSI-UniKonstanz/vanted/wiki/Sourcecode) for more information) as well as the LMME repository and load them into Eclipse (or the IDE of your choice).
 ```
-git checkout git@github.com:LSI-UniKonstanz/vanted.git
-git checkout git@github.com:LSI-UniKonstanz/vanted-libraries.git
-git checkout git@github.com:LSI-UniKonstanz/lmme.git
+git clone https://github.com/LSI-UniKonstanz/vanted.git
+git clone https://github.com/LSI-UniKonstanz/vanted-libraries.git
+git clone https://github.com/LSI-UniKonstanz/lmme.git
 ```    
 1. Make sure the **lmme** project has its reference to the **Vanted** project (in Eclipse for example, go to *Project* > *Properties* > *Java build path* > *Projects* > *Add...* and add the **vanted** project there).
 1. Start coding and finally build the jar as described above.
