@@ -2,12 +2,12 @@
 <!DOCTYPE plugin PUBLIC "-//GRAFFITI/DTD Plugin Descriptin 1.0//EN" "http://www.graffiti.org/dtd/1.0/plugin.dtd">
 <plugin>
 	<author>Michael Aichem, Tobias Czauderna</author>
-    <description>Large Metabolic Model Explorer</description>
+    <description>Large Metabolic Model Explorer, for the visual exploration of large metabolic models using model decompositions.</description>
     <plugindesc>
         <name>lmme</name>
         <main>org.vanted.addons.lmme.LMMEAddon</main>
-        <version>0.1</version>
+        <version>1.0.0</version>
         <compatibility>2.7</compatibility>
-        <available>http://www.vanted.org</available>
+        <available>https://www.cls.uni-konstanz.de/software/lmme</available>
     </plugindesc>
 </plugin>
