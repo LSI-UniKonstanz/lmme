@@ -156,14 +156,14 @@ public class OverRepresentationAnalysis {
 			
 			double cumulativeProbability = 0.0;
 			try {
-				cumulativeProbability = hgd.cumulativeProbability(differentiallyExpressedInSubsystem);
-				// Switch to right-tailed test if probability > .5
-				if (cumulativeProbability > 0.5) {
-					cumulativeProbability = 1.0 - hgd.cumulativeProbability(differentiallyExpressedInSubsystem - 1);
-				}
+				// cumulating from the right, as we test one-tailed
+				cumulativeProbability = hgd.cumulativeProbability(differentiallyExpressedInSubsystem, referenceInSubsystem);
 			} catch (MathException e) {
 				e.printStackTrace();
 			}
+			
+//			System.out.println("Subsystem " + subsystem.getName() + " has diff: " + differentiallyExpressedInSubsystem
+//					+ " and ref: " + referenceInSubsystem + " and p= " + cumulativeProbability);
 			
 			pValueMap.put(subsystem, Double.valueOf(cumulativeProbability));
 		}
