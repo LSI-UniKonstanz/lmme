@@ -15,9 +15,11 @@
 package org.vanted.addons.lmme.decomposition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.graffiti.graph.Node;
+import org.vanted.addons.lmme.core.LMMEConstants;
 import org.vanted.addons.lmme.graphs.SubsystemGraph;
 
 /**
@@ -47,6 +49,12 @@ public class MMDecomposition {
 	private HashMap<Node, ArrayList<SubsystemGraph>> reactionSubsystemsMap;
 	
 	private ArrayList<SubsystemGraph> subsystems;
+	
+	private double subsystemSizeMean = -1.0;
+	private double subsystemSizeMedian = -1.0;
+	private double subsystemSizeStandardDeviation = -1.0;
+	private int subsystemSizeMinimum = -1;
+	private int subsystemSizeMaximum = -1;
 	
 	public MMDecomposition(ArrayList<SubsystemGraph> subsystems) {
 		
@@ -134,6 +142,110 @@ public class MMDecomposition {
 	 */
 	public ArrayList<SubsystemGraph> getSubsystemsForReaction(Node reactionNode) {
 		return this.reactionSubsystemsMap.get(reactionNode);
+	}
+	
+	/**
+	 * Returns the mean number of reactions per subsystem in this decomposition
+	 * 
+	 * @return the mean number of reactions per subsystem in this decomposition
+	 */
+	public double getSubsystemSizeMean() {
+		if (this.subsystemSizeMean == -1.0) {
+			double num = 0.0;
+			for (SubsystemGraph subsystem : getSubsystems()) {
+				num += (double) subsystem.getNumberOfReactions();
+			}
+			this.subsystemSizeMean = num / ((double) getSubsystems().size());
+		}
+		return this.subsystemSizeMean;
+	}
+	
+	/**
+	 * Returns the median number of reactions per subsystem in this decomposition
+	 * 
+	 * @return the median number of reactions per subsystem in this decomposition
+	 */
+	public double getSubsystemSizeMedian() {
+		if (this.subsystemSizeMedian == -1.0) {
+			int[] sizes = new int[getSubsystems().size()];
+			for (int i = 0; i < getSubsystems().size(); i++) {
+				sizes[i] = getSubsystems().get(i).getNumberOfReactions();
+			}
+			Arrays.sort(sizes);
+			double res;
+			if (sizes.length % 2 == 0) {
+				res = ((double) (sizes[sizes.length / 2] + sizes[sizes.length / 2 - 1])) / 2.0;
+			} else {
+				res = (double) sizes[(sizes.length - 1) / 2];
+			}
+			this.subsystemSizeMedian = res;
+		}
+		return this.subsystemSizeMedian;
+	}
+	
+	/**
+	 * Returns the standard deviation of the number of reactions per subsystem in this decomposition
+	 * 
+	 * @return the standard deviation of the number of reactions per subsystem in this decomposition
+	 */
+	public double getSubsystemSizeStandardDeviation() {
+		if (this.subsystemSizeStandardDeviation == -1.0) {
+			double sum = 0.0;
+			for (SubsystemGraph subsystem : getSubsystems()) {
+				sum += Math.pow(subsystem.getNumberOfReactions() - subsystemSizeMean, 2);
+			}
+			sum = sum / getSubsystems().size();
+			this.subsystemSizeStandardDeviation = Math.sqrt(sum);
+		}
+		return this.subsystemSizeStandardDeviation;
+	}
+	
+	/**
+	 * Returns the minimum number of reactions per subsystem in this decomposition.
+	 * The default and transporter subsystems are not taken into account.
+	 * 
+	 * @return the minimum number of reactions per subsystem in this decomposition
+	 */
+	public int getSubsystemSizeMinimum() {
+		if (this.subsystemSizeMinimum == -1) {
+			int min = -1;
+			for (SubsystemGraph subsystem : getSubsystems()) {
+				if (!(subsystem.getName().equals(LMMEConstants.DEFAULT_SUBSYSTEM)
+						|| subsystem.getName().equals(LMMEConstants.TRANSPORTER_SUBSYSTEM))) {
+					if (min == -1) {
+						min = subsystem.getNumberOfReactions();
+					} else if (subsystem.getNumberOfReactions() < min) {
+						min = subsystem.getNumberOfReactions();
+					}
+				}
+			}
+			this.subsystemSizeMinimum = min;
+		}
+		return this.subsystemSizeMinimum;
+	}
+	
+	/**
+	 * Returns the maximum number of reactions per subsystem in this decomposition.
+	 * The default and transporter subsystems are not taken into account.
+	 * 
+	 * @return the maximum number of reactions per subsystem in this decomposition
+	 */
+	public int getSubsystemSizeMaximum() {
+		if (this.subsystemSizeMaximum == -1) {
+			int max = -1;
+			for (SubsystemGraph subsystem : getSubsystems()) {
+				if (!(subsystem.getName().equals(LMMEConstants.DEFAULT_SUBSYSTEM)
+						|| subsystem.getName().equals(LMMEConstants.TRANSPORTER_SUBSYSTEM))) {
+					if (max == -1) {
+						max = subsystem.getNumberOfReactions();
+					} else if (subsystem.getNumberOfReactions() > max) {
+						max = subsystem.getNumberOfReactions();
+					}
+				}
+			}
+			this.subsystemSizeMaximum = max;
+		}
+		return this.subsystemSizeMaximum;
 	}
 	
 }
