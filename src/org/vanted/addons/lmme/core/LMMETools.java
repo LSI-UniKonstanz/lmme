@@ -62,15 +62,16 @@ public class LMMETools {
 		SBMLReactionHelper sbmlReactionHelper = new SBMLReactionHelper(graph);
 		SBMLSpeciesHelper sbmlSpeciesHelper = new SBMLSpeciesHelper(graph);
 		
-		for (Node node : nodes) {
-			if (isSpecies(node)) {
-				XMLNode notes = sbmlSpeciesHelper.getNotes(node);
-				findNote(notes, res);
-			} else if (isReaction(node)) {
-				XMLNode notes = sbmlReactionHelper.getNotes(node);
-				findNote(notes, res);
-			}
-		}
+		// Problem with copied notes of aggregated disease map graph!
+//		for (Node node : nodes) {
+//			if (isSpecies(node)) {
+//				XMLNode notes = sbmlSpeciesHelper.getNotes(node);
+//				findNote(notes, res);
+//			} else if (isReaction(node)) {
+//				XMLNode notes = sbmlReactionHelper.getNotes(node);
+//				findNote(notes, res);
+//			}
+//		}
 		return res;
 	}
 	
@@ -123,15 +124,16 @@ public class LMMETools {
 			
 			boolean foundNotes = false;
 			
-			for (Node node : nodes) {
-				if (isSpecies(node)) {
-					XMLNode notes = sbmlSpeciesHelper.getNotes(node);
-					foundNotes |= readNote(node, notes, noteName, attributeName);
-				} else if (isReaction(node)) {
-					XMLNode notes = sbmlReactionHelper.getNotes(node);
-					foundNotes |= readNote(node, notes, noteName, attributeName);
-				}
-			}
+			// Problem with copied notes of aggregated disease map graph!
+//			for (Node node : nodes) {
+//				if (isSpecies(node)) {
+//					XMLNode notes = sbmlSpeciesHelper.getNotes(node);
+//					foundNotes |= readNote(node, notes, noteName, attributeName);
+//				} else if (isReaction(node)) {
+//					XMLNode notes = sbmlReactionHelper.getNotes(node);
+//					foundNotes |= readNote(node, notes, noteName, attributeName);
+//				}
+//			}
 			if (foundNotes) {
 				baseGraph.getProcessedNotes().add(noteName);
 			} else {

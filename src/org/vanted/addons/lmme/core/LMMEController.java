@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -29,11 +30,15 @@ import org.AttributeHelper;
 import org.graffiti.editor.GraffitiInternalFrame;
 import org.graffiti.editor.GravistoService;
 import org.graffiti.editor.MainFrame;
+import org.graffiti.graph.AdjListGraph;
 import org.graffiti.graph.Graph;
+import org.graffiti.graph.Node;
 import org.graffiti.plugin.algorithm.Algorithm;
+import org.graffiti.session.Session;
 import org.graffiti.util.InstanceLoader;
 import org.vanted.addons.lmme.analysis.OverRepresentationAnalysis;
 import org.vanted.addons.lmme.decomposition.CompartmentMMDecomposition;
+import org.vanted.addons.lmme.decomposition.DiseaseMapPathwayDecomposition;
 import org.vanted.addons.lmme.decomposition.KeggMMDecomposition;
 import org.vanted.addons.lmme.decomposition.MMDecomposition;
 import org.vanted.addons.lmme.decomposition.MMDecompositionAlgorithm;
@@ -54,6 +59,8 @@ import org.vanted.addons.lmme.ui.LMMETab;
 import org.vanted.addons.lmme.ui.LMMEViewManagement;
 
 import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
+import de.ipk_gatersleben.ag_nw.graffiti.NodeTools;
+import de.ipk_gatersleben.ag_nw.graffiti.plugins.gui.dbe.MergeNodes;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBMLSpeciesHelper;
 
 /**
@@ -101,12 +108,14 @@ public class LMMEController {
 		KeggMMDecomposition keggDecomp = new KeggMMDecomposition();
 		SchusterMMDecomposition schusterDecomp = new SchusterMMDecomposition();
 		CompartmentMMDecomposition compartmentDecomp = new CompartmentMMDecomposition();
+		DiseaseMapPathwayDecomposition diseaseMapPathwayDecomp = new DiseaseMapPathwayDecomposition();
 //		GirvanMMDecomposition girvanDecomp = new GirvanMMDecomposition();
 		
-		decompositionAlgorithmsMap.put(predefDecomp.getName(), predefDecomp);
-		decompositionAlgorithmsMap.put(keggDecomp.getName(), keggDecomp);
+//		decompositionAlgorithmsMap.put(predefDecomp.getName(), predefDecomp);
+//		decompositionAlgorithmsMap.put(keggDecomp.getName(), keggDecomp);
 		decompositionAlgorithmsMap.put(schusterDecomp.getName(), schusterDecomp);
 		decompositionAlgorithmsMap.put(compartmentDecomp.getName(), compartmentDecomp);
+		decompositionAlgorithmsMap.put(diseaseMapPathwayDecomp.getName(), diseaseMapPathwayDecomp);
 //		decompositionAlgorithmsMap.put(girvanDecomp.getName(), girvanDecomp);
 		
 		ForceDirectedMMLayout forceLayout = new ForceDirectedMMLayout();
@@ -195,10 +204,69 @@ public class LMMEController {
 	}
 	
 	/**
+	 * Implements the action for the 'Aggregate Models' button in the Add-On tab.
+	 * <p>
+	 * Aggregates the graphs from all currently loaded views and sets the overall model as the {@link BaseGraph} for the decomposition.
+	 */
+	public void aggregateModelsAction() {
+		
+		Graph aggregatedGraph = new AdjListGraph();
+		aggregatedGraph.setName("Aggregated Model");
+		Set<Session> session = new HashSet<Session>(MainFrame.getSessions());
+		for (Session s : session) {
+			Graph tempGraph = new AdjListGraph();
+			tempGraph.addGraph(s.getGraph());
+			// get name without '.xml' suffix.
+			String tempName = s.getGraph().getName().substring(0, s.getGraph().getName().length() - 4);
+			for (Node reactionNode : tempGraph.getNodes()) {
+				if (LMMETools.getInstance().isReaction(reactionNode)) {
+					AttributeHelper.setAttribute(reactionNode, LMMEConstants.ATTRIBUTE_PATH, LMMEConstants.DISEASE_MAP_PATHWAY_ATRIBUTE, tempName);
+				}
+			}
+			aggregatedGraph.addGraph(tempGraph);
+			MainFrame.getInstance().getSessionManager().closeSession(s);
+		}
+		
+		HashMap<String, ArrayList<Node>> label2NodeListMap = new HashMap<String, ArrayList<Node>>();
+		for (Node speciesNode : aggregatedGraph.getNodes()) {
+			String speciesName = AttributeHelper.getLabel(speciesNode, "");
+			// only merge species, and ignore those wich generic names such as 's234'
+			if (LMMETools.getInstance().isSpecies(speciesNode) && !speciesName.matches("s\\d+")) {
+				if (!label2NodeListMap.containsKey(speciesName)) {
+					label2NodeListMap.put(speciesName, new ArrayList<Node>());
+				}
+				label2NodeListMap.get(speciesName).add(speciesNode);
+				// in case we want to consider compartment information for merging.
+//				if (AttributeHelper.hasAttribute(speciesNode, SBML_Constants.SBML, SBML_Constants.SPECIES_COMPARTMENT_NAME)) {
+//					String compName = (String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML,
+//							SBML_Constants.SPECIES_COMPARTMENT_NAME, "", "");
+//				}
+			}
+		}
+		for (ArrayList<Node> nodesToMerge : label2NodeListMap.values()) {
+			if (nodesToMerge.size() > 1) {
+				Node newNode = MergeNodes.mergeNode(aggregatedGraph, nodesToMerge, NodeTools.getCenter(nodesToMerge), false);
+				aggregatedGraph.deleteAll(nodesToMerge);
+			}
+		}
+		
+		// get rid of unused cluster attributes.
+		for (Node node : aggregatedGraph.getNodes()) {
+			if (AttributeHelper.hasAttribute(node, "cluster", "cluster")) {
+				AttributeHelper.deleteAttribute(node, "cluster", "cluster");
+			}
+		}
+		
+		MainFrame.getInstance().showGraph(aggregatedGraph, null);
+		setModelAction();
+		
+	}
+	
+	/**
 	 * Implements the action for the 'Show Overview Graph' button in the Add-On tab.
 	 * <p>
 	 * Using the {@link BaseGraph} of the {@link #currentSession}, the selected decomposition is performed and the overview graph is created and drawn according
-	 * to the selected layout method..
+	 * to the selected layout method.
 	 */
 	public void showOverviewGraphAction() {
 		if (this.currentSession.isModelSet()) {

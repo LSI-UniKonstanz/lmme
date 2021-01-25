@@ -146,14 +146,24 @@ public class LMMETab extends InspectorTab {
 		
 		int rowCount = 1;
 		
-		JButton btnSetModel = new JButton("Set Model");
-		btnSetModel.setToolTipText(
-				"Sets the model from the currently active view as the base graph for the decomposition.");
-		mainPanel.add(btnSetModel, "0," + rowCount);
+//		JButton btnSetModel = new JButton("Set Model");
+//		btnSetModel.setToolTipText(
+//				"Sets the model from the currently active view as the base graph for the decomposition.");
+//		mainPanel.add(btnSetModel, "0," + rowCount);
+		JButton btnAggregateModels = new JButton("Aggregate Models");
+		btnAggregateModels.setToolTipText(
+				"Aggregates the graphs from all currently loaded views and sets the overall model as the base graph for the"
+						+ " decomposition.");
+		mainPanel.add(btnAggregateModels, "0," + rowCount);
 		rowCount += 2;
-		btnSetModel.addActionListener(new ActionListener() {
+//		btnSetModel.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent e) {
+//				LMMEController.getInstance().setModelAction();
+//			}
+//		});
+		btnAggregateModels.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				LMMEController.getInstance().setModelAction();
+				LMMEController.getInstance().aggregateModelsAction();;
 			}
 		});
 		
@@ -1203,7 +1213,7 @@ public class LMMETab extends InspectorTab {
 	@Override
 	public String getTitle() {
 		
-		return "LMME";
+		return "LMME DM";
 		
 	}
 	

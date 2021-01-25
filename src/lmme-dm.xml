@@ -4,7 +4,7 @@
 	<author>Michael Aichem, Tobias Czauderna</author>
     <description>Large Metabolic Model Explorer, for the visual exploration of large metabolic models using model decompositions.</description>
     <plugindesc>
-        <name>lmme</name>
+        <name>lmme-dm</name>
         <main>org.vanted.addons.lmme.LMMEAddon</main>
         <version>1.0.0</version>
         <compatibility>2.7</compatibility>

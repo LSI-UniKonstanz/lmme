@@ -45,7 +45,7 @@ public class StartVantedWithLMMEAddon {
 	 */
 	public static String getAddonName() {
 		
-		return "LMME";
+		return "LMME DM";
 		
 	}
 	
@@ -56,7 +56,7 @@ public class StartVantedWithLMMEAddon {
 	 */
 	public static String getAddonNameXML() {
 		
-		return "lmme.xml";
+		return "lmme-dm.xml";
 		
 	}
 	
