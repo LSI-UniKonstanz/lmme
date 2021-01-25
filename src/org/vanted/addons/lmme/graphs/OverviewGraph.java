@@ -32,6 +32,7 @@ import org.graffiti.selection.SelectionEvent;
 import org.graffiti.selection.SelectionListener;
 import org.graffiti.session.EditorSession;
 import org.vanted.addons.lmme.core.LMMEController;
+import org.vanted.addons.lmme.core.LMMETools;
 import org.vanted.addons.lmme.decomposition.MMDecomposition;
 import org.vanted.addons.lmme.ui.LMMETab;
 import org.vanted.addons.lmme.ui.LMMEViewManagement;
@@ -114,9 +115,11 @@ public class OverviewGraph {
 					Edge addedEdge = graph.addEdge(sourceNode, targetNode, false,
 							AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
 					
+					HashSet<Node> interfaceSet = new HashSet<Node>();
+					interfaceSet.addAll(getInterfaceNodes(subsystem1, subsystem2));
+					interfaceSet.addAll(getInterfaceNodes(subsystem2, subsystem1));
 					ArrayList<Node> interfaces = new ArrayList<Node>();
-					interfaces.addAll(getInterfaceNodes(subsystem1, subsystem2));
-					interfaces.addAll(getInterfaceNodes(subsystem2, subsystem1));
+					interfaces.addAll(interfaceSet);
 					edgeToInterfacesMap.put(addedEdge, interfaces);
 				}
 			}
@@ -263,10 +266,14 @@ public class OverviewGraph {
 			HashSet<SubsystemGraph> inSystems = new HashSet<>();
 			HashSet<SubsystemGraph> outSystems = new HashSet<>();
 			for (Node reactionNode : inneighbors) {
-				inSystems.addAll(this.decomposition.getSubsystemsForReaction(reactionNode));
+				if (LMMETools.getInstance().isReaction(reactionNode)) {
+					inSystems.addAll(this.decomposition.getSubsystemsForReaction(reactionNode));
+				}
 			}
 			for (Node reactionNode : outneighbors) {
-				outSystems.addAll(this.decomposition.getSubsystemsForReaction(reactionNode));
+				if (LMMETools.getInstance().isReaction(reactionNode)) {
+					outSystems.addAll(this.decomposition.getSubsystemsForReaction(reactionNode));
+				}
 			}
 			for (SubsystemGraph inSystem : inSystems) {
 				for (SubsystemGraph outSystem : outSystems) {
