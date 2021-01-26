@@ -108,6 +108,8 @@ public class LMMETab extends InspectorTab {
 	private JCheckBox ckbMapToEdgeThickness;
 	private JCheckBox ckbDrawEdges;
 	private JCheckBox ckbAddTransporterSubS;
+	private JCheckBox ckbShowInterfaces;
+	private JCheckBox ckbColorInterfaces;
 	
 	private JComboBox<String> cbDecompMethod;
 	private JComboBox<String> cbOverviewLayout;
@@ -214,6 +216,20 @@ public class LMMETab extends InspectorTab {
 			}
 		});
 		this.ckbMapToEdgeThickness.setSelected(false);
+		
+		this.ckbColorInterfaces = new JCheckBox("Color Interface Nodes");
+		this.ckbColorInterfaces.setToolTipText("<html>Use a color mapping to indicate the degree of an interface node.</html>");
+		this.ckbColorInterfaces.setBackground(Color.WHITE);
+		mainPanel.add(this.ckbColorInterfaces, "0," + rowCount);
+		rowCount += 2;
+		this.ckbColorInterfaces.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if (LMMEController.getInstance().getCurrentSession().isOverviewGraphConstructed()) {
+					LMMEController.getInstance().getCurrentSession().getOverviewGraph().colorInterfaces();
+				}
+			}
+		});
+		this.ckbColorInterfaces.setSelected(true);
 		
 		mainPanel.add(instantiateORA(), "0," + rowCount);
 		rowCount += 2;
@@ -532,6 +548,12 @@ public class LMMETab extends InspectorTab {
 				.setToolTipText("Constructs another subsystem that consists of all transport reactions.");
 		this.ckbAddTransporterSubS.setBackground(Color.WHITE);
 		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbAddTransporterSubS, 0, 0, 0, 0), null, true);
+		
+		this.ckbShowInterfaces = new JCheckBox("Show Interfaces");
+		this.ckbShowInterfaces
+				.setToolTipText("If selected, the interface species between subsystems will also be shown in the overview graph.");
+		this.ckbShowInterfaces.setBackground(Color.WHITE);
+		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbShowInterfaces, 0, 0, 0, 0), null, true);
 		
 // Snippet might be useful in the future
 //		ckbAddDefaultSubS.addItemListener(new ItemListener() {
@@ -983,6 +1005,15 @@ public class LMMETab extends InspectorTab {
 	}
 	
 	/**
+	 * returns whether the user has selected the map to edge thickness option.
+	 * 
+	 * @return whether the user has selected the map to edge thickness option
+	 */
+	public boolean getColorInterfaces() {
+		return this.ckbColorInterfaces.isSelected();
+	}
+	
+	/**
 	 * returns whether the user has selected the draw edges option.
 	 * 
 	 * @return whether the user has selected the draw edges option
@@ -998,6 +1029,15 @@ public class LMMETab extends InspectorTab {
 	 */
 	public boolean getAddTransporterSubS() {
 		return this.ckbAddTransporterSubS.isSelected();
+	}
+	
+	/**
+	 * Returns whether the user has selected the show interfaces option.
+	 * 
+	 * @return
+	 */
+	public boolean getShowInterfaces() {
+		return this.ckbShowInterfaces.isSelected();
 	}
 	
 	/**
@@ -1104,6 +1144,19 @@ public class LMMETab extends InspectorTab {
 			resetLblNumberOfSubsystems();
 		}
 		// TODO SubsystemView Management query, what is shown?!
+	}
+	
+	/**
+	 * Updates the availability of several options, which depend on each other.
+	 */
+	public void updateOptions() {
+		if (getShowInterfaces()) {
+			this.ckbColorInterfaces.setEnabled(true);
+			this.ckbMapToEdgeThickness.setEnabled(false);
+		} else {
+			this.ckbColorInterfaces.setEnabled(false);
+			this.ckbMapToEdgeThickness.setEnabled(true);
+		}
 	}
 	
 	/**

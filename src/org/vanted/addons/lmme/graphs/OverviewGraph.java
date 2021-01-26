@@ -44,11 +44,14 @@ import org.vanted.addons.lmme.ui.LMMEViewManagement;
  */
 public class OverviewGraph {
 	
-	private final int nodeSize = 100;
+	private final int nodeSizeSubsystem = 100;
+	private final int nodeSizeInterface = 50;
 	
 	private Graph graph;
 	
 	private MMDecomposition decomposition;
+	
+	private boolean containsInterfaceNodes;
 	
 	private HashMap<SubsystemGraph, HashMap<SubsystemGraph, ArrayList<Node>>> interfaceMap;
 	
@@ -71,6 +74,11 @@ public class OverviewGraph {
 	private HashMap<Edge, ArrayList<Node>> edgeToInterfacesMap;
 	
 	/**
+	 * A map that maps an interface node to its corresponding node in the overview graph.
+	 */
+	private HashMap<Node, Node> interfaceToNewNodeMap;
+	
+	/**
 	 * Constructor for the overview graph.
 	 * <p>
 	 * During execution, the decomposition is processed to create an overview graph. This is done by creating one node per subsystem and successively determining
@@ -79,10 +87,13 @@ public class OverviewGraph {
 	 * @param decomposition
 	 *           the underlying decomposition
 	 */
-	public OverviewGraph(MMDecomposition decomposition) {
+	public OverviewGraph(MMDecomposition decomposition, boolean showInterfaces) {
 		this.nodeToSubsystemMap = new HashMap<>();
 		this.subsystemToNodeMap = new HashMap<>();
 		this.edgeToInterfacesMap = new HashMap<>();
+		this.interfaceToNewNodeMap = new HashMap<>();
+		this.containsInterfaceNodes = showInterfaces;
+		Random random = new Random();
 		
 		this.decomposition = decomposition;
 		determineInterfaces();
@@ -92,12 +103,11 @@ public class OverviewGraph {
 		ArrayList<SubsystemGraph> subsystems = this.decomposition.getSubsystems();
 		
 		for (SubsystemGraph subsystem : subsystems) {
-			Random random = new Random();
 			
 			Node subsystemNode = graph.addNode(
 					AttributeHelper.getDefaultGraphicsAttributeForNode(random.nextInt(1000), random.nextInt(1000)));
 			AttributeHelper.setLabel(subsystemNode, subsystem.getName());
-			AttributeHelper.setSize(subsystemNode, nodeSize, nodeSize);
+			AttributeHelper.setSize(subsystemNode, nodeSizeSubsystem, nodeSizeSubsystem);
 			
 			subsystemToNodeMap.put(subsystem, subsystemNode);
 			nodeToSubsystemMap.put(subsystemNode, subsystem);
@@ -112,26 +122,53 @@ public class OverviewGraph {
 				if (totalInterfaces > 0) {
 					Node sourceNode = subsystemToNodeMap.get(subsystem1);
 					Node targetNode = subsystemToNodeMap.get(subsystem2);
-					Edge addedEdge = graph.addEdge(sourceNode, targetNode, false,
-							AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
 					
 					HashSet<Node> interfaceSet = new HashSet<Node>();
 					interfaceSet.addAll(getInterfaceNodes(subsystem1, subsystem2));
 					interfaceSet.addAll(getInterfaceNodes(subsystem2, subsystem1));
-					ArrayList<Node> interfaces = new ArrayList<Node>();
-					interfaces.addAll(interfaceSet);
-					edgeToInterfacesMap.put(addedEdge, interfaces);
+					
+					if (showInterfaces) {
+						for (Node interfaceNode : interfaceSet) {
+							if (!interfaceToNewNodeMap.containsKey(interfaceNode)) {
+								Node newInterfaceNode = graph.addNodeCopy(interfaceNode);
+								AttributeHelper.setSize(newInterfaceNode, nodeSizeInterface, nodeSizeInterface);
+								interfaceToNewNodeMap.put(interfaceNode, newInterfaceNode);
+							}
+							Node interfaceNodeOG = interfaceToNewNodeMap.get(interfaceNode);
+							if (!interfaceNodeOG.getNeighbors().contains(sourceNode)) {
+								graph.addEdge(sourceNode, interfaceNodeOG, false, AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
+							}
+							if (!interfaceNodeOG.getNeighbors().contains(targetNode)) {
+								graph.addEdge(targetNode, interfaceNodeOG, false, AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
+							}
+						}
+					} else {
+						ArrayList<Node> interfaces = new ArrayList<Node>();
+						interfaces.addAll(interfaceSet);
+						Edge addedEdge = graph.addEdge(sourceNode, targetNode, false,
+								AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
+						edgeToInterfacesMap.put(addedEdge, interfaces);
+					}
+					
 				}
 			}
 		}
 		updateEdgeThickness();
+		colorInterfaces();
 	}
 	
 	/**
 	 * @return the nodeSize
 	 */
-	public int getNodeSize() {
-		return nodeSize;
+	public int getSubsystemNodeSize() {
+		return nodeSizeSubsystem;
+	}
+	
+	/**
+	 * @return the nodeSize
+	 */
+	public int getInterfaceNodeSize() {
+		return nodeSizeInterface;
 	}
 	
 	/**
@@ -185,7 +222,9 @@ public class OverviewGraph {
 		ArrayList<SubsystemGraph> selectedSubsystems = new ArrayList<>();
 		
 		for (Node node : selectedNodes) {
-			selectedSubsystems.add(this.nodeToSubsystemMap.get(node));
+			if (this.nodeToSubsystemMap.containsKey(node)) {
+				selectedSubsystems.add(this.nodeToSubsystemMap.get(node));
+			}
 		}
 		
 		return selectedSubsystems;
@@ -214,7 +253,7 @@ public class OverviewGraph {
 				Collection<Node> nodes = e.getSelection().getNodes();
 				LMMETab tab = LMMEController.getInstance().getTab();
 				
-				if ((edges.size() == 1) && (nodes.size() == 0)) {
+				if ((edges.size() == 1) && (nodes.size() == 0) && !containsInterfaceNodes) {
 					Edge edge = edges.iterator().next();
 					ArrayList<String> names = new ArrayList<String>();
 					for (Node interfaceNode : edgeToInterfacesMap.get(edge)) {
@@ -224,9 +263,11 @@ public class OverviewGraph {
 							nodeToSubsystemMap.get(edge.getTarget()).getName(), names);
 				} else if ((nodes.size() == 1) && (edges.size() == 0)) {
 					Node node = nodes.iterator().next();
-					SubsystemGraph subsystem = nodeToSubsystemMap.get(node);
-					tab.showSelectedSubsystemInfo(subsystem.getName(), subsystem.getNumberOfSpecies(),
-							subsystem.getNumberOfReactions());
+					if (nodeToSubsystemMap.containsKey(node)) {
+						SubsystemGraph subsystem = nodeToSubsystemMap.get(node);
+						tab.showSelectedSubsystemInfo(subsystem.getName(), subsystem.getNumberOfSpecies(),
+								subsystem.getNumberOfReactions());
+					}
 				} else {
 					tab.resetSelectionInfo();
 				}
@@ -300,7 +341,7 @@ public class OverviewGraph {
 	public void updateEdgeThickness() {
 		for (Edge edge : graph.getEdges()) {
 			if (LMMEController.getInstance().getTab().getDrawEdges()) {
-				if (LMMEController.getInstance().getTab().getMapToEdgeThickness()) {
+				if (LMMEController.getInstance().getTab().getMapToEdgeThickness() && !containsInterfaceNodes) {
 					int totalInterfaces = edgeToInterfacesMap.get(edge).size();
 					AttributeHelper.setFrameThickNess(edge, totalInterfaces > 20 ? 20.0 : (double) totalInterfaces);
 				} else {
@@ -316,6 +357,24 @@ public class OverviewGraph {
 					LMMEViewManagement.getInstance().getOverviewFrame().getView().getGraph());
 		}
 		
+	}
+	
+	public void colorInterfaces() {
+		int maxDeg = -1;
+		for (Node interfaceNode : this.interfaceToNewNodeMap.values()) {
+			if (interfaceNode.getDegree() > maxDeg) {
+				maxDeg = interfaceNode.getDegree();
+			}
+		}
+		for (Node interfaceNode : this.interfaceToNewNodeMap.values()) {
+			Color c = Color.WHITE;
+			if (LMMEController.getInstance().getTab().getColorInterfaces()) {
+				
+				int frac = 255 - ((interfaceNode.getDegree() * 255) / maxDeg);
+				c = new Color(255, frac, frac);
+			}
+			AttributeHelper.setFillColor(interfaceNode, c);
+		}
 	}
 	
 }
