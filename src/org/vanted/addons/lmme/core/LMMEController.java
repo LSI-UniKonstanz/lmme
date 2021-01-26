@@ -219,7 +219,7 @@ public class LMMEController {
 				public void run() {
 					MMDecomposition decomposition = decompositionAlgorithmsMap.get(tab.getDecompositionMethod())
 							.run(tab.getAddTransporterSubS());
-					currentSession.setOverviewGraph(new OverviewGraph(decomposition));
+					currentSession.setOverviewGraph(new OverviewGraph(decomposition, tab.getShowInterfaces()));
 					SwingUtilities.invokeLater(new Runnable() {
 						public void run() {
 							LMMEViewManagement.getInstance()
@@ -228,6 +228,7 @@ public class LMMEController {
 									LMMEViewManagement.getInstance().getOverviewFrame().getView().getGraph());
 							LMMESubsystemViewManagement.getInstance().resetLists();
 							tab.setLblNumberOfSubsystems(decomposition.getSubsystems().size());
+							tab.updateOptions();
 						}
 					});
 				}

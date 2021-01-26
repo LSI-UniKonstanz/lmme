@@ -33,7 +33,7 @@ public class GridMMLayout implements MMOverviewLayout {
 	@Override
 	public void layOutAsOverview(Graph graph) {
 		
-		double distance = LMMEController.getInstance().getCurrentSession().getOverviewGraph().getNodeSize() * 2;
+		double distance = LMMEController.getInstance().getCurrentSession().getOverviewGraph().getSubsystemNodeSize() * 2;
 		GridLayouterAlgorithm.layoutOnGrid(graph.getNodes(), 0.5, distance, distance);
 		
 	}
