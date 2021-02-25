@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -62,6 +63,7 @@ import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
 import de.ipk_gatersleben.ag_nw.graffiti.NodeTools;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.gui.dbe.MergeNodes;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBMLSpeciesHelper;
+import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBML_Constants;
 
 /**
  * This class controls and coordinates the actions of LMME.
@@ -213,6 +215,7 @@ public class LMMEController {
 		Graph aggregatedGraph = new AdjListGraph();
 		aggregatedGraph.setName("Aggregated Model");
 		Set<Session> session = new HashSet<Session>(MainFrame.getSessions());
+		HashSet<String> allUniqueNames = new HashSet<String>();
 		for (Session s : session) {
 			Graph tempGraph = new AdjListGraph();
 			tempGraph.addGraph(s.getGraph());
@@ -223,24 +226,52 @@ public class LMMEController {
 					AttributeHelper.setAttribute(reactionNode, LMMEConstants.ATTRIBUTE_PATH, LMMEConstants.DISEASE_MAP_PATHWAY_ATRIBUTE, tempName);
 				}
 			}
+			
+			ArrayList<String> allNames = new ArrayList<String>();
+			HashSet<String> uniqueNames = new HashSet<String>();
+			
+			for (Node speciesNode : tempGraph.getNodes()) {
+				if (LMMETools.getInstance().isSpecies(speciesNode)) {
+					if (AttributeHelper.hasAttribute(speciesNode, SBML_Constants.SBML, SBML_Constants.SPECIES_COMPARTMENT_NAME)) {
+						String compName = (String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML,
+								SBML_Constants.SPECIES_COMPARTMENT_NAME, "", "");
+						allNames.add(compName);
+						uniqueNames.add(compName);
+						allUniqueNames.add(compName);
+					}
+				}
+			}
+			
+//			System.out.println(tempName + ":");
+			for (String compName : uniqueNames) {
+				int occurences = 0;
+				for (int i = 0; i < allNames.size(); i++) {
+					if (allNames.get(i).equals(compName)) {
+						occurences += 1;
+					}
+				}
+//				System.out.println("\t" + occurences + " occurences of " + compName);
+			}
+			
 			aggregatedGraph.addGraph(tempGraph);
+			s.getGraph().setModified(false);
 			MainFrame.getInstance().getSessionManager().closeSession(s);
+		}
+//		System.out.println("All compartments:");
+		for (String compName : allUniqueNames) {
+//			System.out.println("\t" + compName);
 		}
 		
 		HashMap<String, ArrayList<Node>> label2NodeListMap = new HashMap<String, ArrayList<Node>>();
 		for (Node speciesNode : aggregatedGraph.getNodes()) {
 			String speciesName = AttributeHelper.getLabel(speciesNode, "");
-			// only merge species, and ignore those wich generic names such as 's234'
-			if (LMMETools.getInstance().isSpecies(speciesNode) && !speciesName.matches("s\\d+")) {
+			
+			// only merge species, and ignore those with generic names such as 's234'
+			if (LMMETools.getInstance().isSpecies(speciesNode) && !speciesName.split(Pattern.quote("$"))[0].matches("s\\d+")) {
 				if (!label2NodeListMap.containsKey(speciesName)) {
 					label2NodeListMap.put(speciesName, new ArrayList<Node>());
 				}
 				label2NodeListMap.get(speciesName).add(speciesNode);
-				// in case we want to consider compartment information for merging.
-//				if (AttributeHelper.hasAttribute(speciesNode, SBML_Constants.SBML, SBML_Constants.SPECIES_COMPARTMENT_NAME)) {
-//					String compName = (String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML,
-//							SBML_Constants.SPECIES_COMPARTMENT_NAME, "", "");
-//				}
 			}
 		}
 		for (ArrayList<Node> nodesToMerge : label2NodeListMap.values()) {
