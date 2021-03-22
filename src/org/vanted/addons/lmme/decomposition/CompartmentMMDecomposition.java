@@ -16,7 +16,6 @@ package org.vanted.addons.lmme.decomposition;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import javax.swing.JLabel;
@@ -46,21 +45,14 @@ public class CompartmentMMDecomposition extends MMDecompositionAlgorithm {
 	protected ArrayList<SubsystemGraph> runSpecific(HashSet<Node> alreadyClassifiedNodes) {
 		
 		HashSet<String> compartments = new HashSet<String>();
-		HashMap<String, String> compartmentAbbreviations = new HashMap<String, String>();
 		
 		BaseGraph baseGraph = LMMEController.getInstance().getCurrentSession().getBaseGraph();
 		
 		for (Node speciesNode : baseGraph.getSpeciesNodes()) {
 			if (!alreadyClassifiedNodes.contains(speciesNode)) {
-				if (AttributeHelper.hasAttribute(speciesNode, SBML_Constants.SBML, SBML_Constants.COMPARTMENT)) {
-					String compNameShort = (String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML,
-							SBML_Constants.COMPARTMENT, "", "");
-					compartments.add(compNameShort);
-					if (AttributeHelper.hasAttribute(speciesNode, SBML_Constants.SBML, SBML_Constants.SPECIES_COMPARTMENT_NAME)) {
-						String compNameLong = (String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML,
-								SBML_Constants.SPECIES_COMPARTMENT_NAME, "", "");
-						compartmentAbbreviations.put(compNameShort, compNameLong);
-					}
+				if (AttributeHelper.hasAttribute(speciesNode, SBML_Constants.SBML, SBML_Constants.SPECIES_COMPARTMENT_NAME)) {
+					String compName = (String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML, SBML_Constants.SPECIES_COMPARTMENT_NAME, "", "");
+					compartments.add(compName);
 				}
 			}
 		}
@@ -68,27 +60,31 @@ public class CompartmentMMDecomposition extends MMDecompositionAlgorithm {
 		ArrayList<SubsystemGraph> subsystems = new ArrayList<SubsystemGraph>();
 		
 		for (String compartment : compartments) {
-			String compLongName = compartmentAbbreviations.get(compartment);
-			String compName = compLongName == null ? "Compartment " + compartment : compLongName;
-			SubsystemGraph subsystem = new SubsystemGraph(compName, new HashSet<>(),
-					new HashSet<>(), new HashSet<>());
+			SubsystemGraph subsystem = new SubsystemGraph(compartment, new HashSet<>(), new HashSet<>(), new HashSet<>());
 			for (Node speciesNode : baseGraph.getSpeciesNodes()) {
-				if (compartment.equals((String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML,
-						SBML_Constants.COMPARTMENT, "", ""))) {
-					if (!alreadyClassifiedNodes.contains(speciesNode)) {
-						subsystem.addSpecies(speciesNode);
-						Collection<Edge> edgeSet = speciesNode.getEdges();
-						for (Edge edge : edgeSet) {
-							Node neighbor;
-							if (edge.getSource() == speciesNode) {
-								neighbor = edge.getTarget();
-							} else {
-								neighbor = edge.getSource();
+				if (compartment
+						.equals((String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML, SBML_Constants.SPECIES_COMPARTMENT_NAME, "", ""))) {
+					subsystem.addSpecies(speciesNode);
+					Collection<Edge> edgeSet = speciesNode.getEdges();
+					for (Edge edge : edgeSet) {
+						Node neighbor;
+						if (edge.getSource() == speciesNode) {
+							neighbor = edge.getTarget();
+						} else {
+							neighbor = edge.getSource();
+						}
+						if (!alreadyClassifiedNodes.contains(neighbor)) {
+							subsystem.addReaction(neighbor);
+							alreadyClassifiedNodes.add(neighbor);
+							for (Edge incidentEdge : neighbor.getEdges()) {
+								subsystem.addEdge(incidentEdge);
+								if (incidentEdge.getSource() == neighbor) {
+									subsystem.addSpecies(incidentEdge.getTarget());
+								} else {
+									subsystem.addSpecies(incidentEdge.getSource());
+								}
 							}
-							if (!alreadyClassifiedNodes.contains(neighbor)) {
-								subsystem.addReaction(neighbor);
-								subsystem.addEdge(edge);
-							}
+							subsystem.addEdge(edge);
 						}
 					}
 				}
@@ -129,7 +125,7 @@ public class CompartmentMMDecomposition extends MMDecompositionAlgorithm {
 	
 	@Override
 	public boolean requiresTransporterSubsystem() {
-		return true;
+		return false;
 	}
 	
 }

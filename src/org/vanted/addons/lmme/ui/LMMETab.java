@@ -38,6 +38,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -47,6 +48,7 @@ import org.AttributeHelper;
 import org.FolderPanel;
 import org.GuiRow;
 import org.SystemInfo;
+import org.graffiti.graph.Graph;
 import org.graffiti.graph.Node;
 import org.graffiti.plugin.inspector.InspectorTab;
 import org.graffiti.plugin.view.View;
@@ -60,6 +62,7 @@ import org.vanted.addons.lmme.core.LMMESession;
 import org.vanted.addons.lmme.decomposition.MMDecompositionAlgorithm;
 import org.vanted.addons.lmme.graphs.BaseGraph;
 import org.vanted.addons.lmme.graphs.OverviewGraph;
+import org.vanted.addons.lmme.graphs.SubsystemGraph;
 import org.vanted.addons.lmme.layout.ForceDirectedMMLayout;
 
 import info.clearthought.layout.TableLayout;
@@ -143,7 +146,8 @@ public class LMMETab extends InspectorTab {
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
-						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM } }));
+						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
+						TableLayoutConstants.MINIMUM } }));
 		mainPanel.setBackground(Color.WHITE);
 		
 		int rowCount = 1;
@@ -152,10 +156,9 @@ public class LMMETab extends InspectorTab {
 //		btnSetModel.setToolTipText(
 //				"Sets the model from the currently active view as the base graph for the decomposition.");
 //		mainPanel.add(btnSetModel, "0," + rowCount);
-		JButton btnAggregateModels = new JButton("Aggregate Models");
+		JButton btnAggregateModels = new JButton("Initialise Exploration");
 		btnAggregateModels.setToolTipText(
-				"Aggregates the graphs from all currently loaded views and sets the overall model as the base graph for the"
-						+ " decomposition.");
+				"Sets the aggregated graph as the base graph for the decomposition.");
 		mainPanel.add(btnAggregateModels, "0," + rowCount);
 		rowCount += 2;
 //		btnSetModel.addActionListener(new ActionListener() {
@@ -168,6 +171,9 @@ public class LMMETab extends InspectorTab {
 				LMMEController.getInstance().aggregateModelsAction();;
 			}
 		});
+		
+		mainPanel.add(instantiateNodeHighlighting(), "0," + rowCount);
+		rowCount += 2;
 		
 		mainPanel.add(createSessionInformationComponent(), "0," + rowCount);
 		rowCount += 2;
@@ -259,6 +265,79 @@ public class LMMETab extends InspectorTab {
 		});
 		
 		LMMEController.getInstance().setTab(this);
+	}
+	
+	private JButton instantiateNodeHighlighting() {
+		JFrame frameNodeHighlighting = new JFrame("Node Highlighting");
+		frameNodeHighlighting.setLayout(new TableLayout(new double[][] { { TableLayoutConstants.FILL },
+				{ TableLayoutConstants.MINIMUM, TableLayoutConstants.FILL, 35.0 } }));
+		frameNodeHighlighting.add(new JLabel("<html><p>Insert names of species to be highlighted.</p>"
+				+ "<p> Use one line per species name.</p></html>"), "0,0");
+		JTextArea textArea = new JTextArea();
+		textArea.setEditable(true);
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		frameNodeHighlighting.add(scrollPane, "0,1");
+		JButton button = new JButton("Highlight Nodes");
+		frameNodeHighlighting.add(button, "0,2");
+		button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (!LMMEController.getInstance().getCurrentSession().isModelSet()) {
+					frameNodeHighlighting.setVisible(false);
+					return;
+				}
+				BaseGraph baseGraph = LMMEController.getInstance().getCurrentSession().getBaseGraph();
+				ArrayList<Node> nodesToHighlight = new ArrayList<Node>();
+				for (String name : textArea.getText().split("\\n")) {
+					for (Node node : baseGraph.getSpeciesNodes()) {
+						if (AttributeHelper.getLabel(node, "none").equals(name)) {
+							nodesToHighlight.add(node);
+						}
+					}
+				}
+				
+				if (LMMEController.getInstance().getCurrentSession().isOverviewGraphConstructed()) {
+					for (SubsystemGraph subsystem : LMMEController.getInstance().getCurrentSession().getOverviewGraph()
+							.getDecomposition().getSubsystems()) {
+						AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
+								.getNodeOfSubsystem(subsystem), Color.WHITE);
+						for (Node node : nodesToHighlight) {
+							if (subsystem.getSpeciesNodes().contains(node)) {
+								AttributeHelper.setFillColor(LMMEController.getInstance().getCurrentSession().getOverviewGraph()
+										.getNodeOfSubsystem(subsystem), Color.RED);
+							}
+						}
+					}
+				}
+				
+				if (LMMEViewManagement.getInstance().getSubsystemFrame() != null) {
+					Graph csg = LMMEViewManagement.getInstance().getSubsystemFrame().getView().getGraph();
+					for (Node node : csg.getNodes()) {
+						if (AttributeHelper.getFillColor(node).equals(Color.RED)) {
+							AttributeHelper.setFillColor(node, Color.WHITE);
+						}
+						for (Node node2 : nodesToHighlight) {
+							if (AttributeHelper.getLabel(node, "none1").equals(AttributeHelper.getLabel(node2, "none2"))) {
+								AttributeHelper.setFillColor(node, Color.RED);
+							}
+						}
+					}
+				}
+				
+				frameNodeHighlighting.setVisible(false);
+			}
+		});
+		
+		frameNodeHighlighting.setSize(400, 400);
+		frameNodeHighlighting.setLocationRelativeTo(null);
+		
+		JButton btnNodeHighlighting = new JButton("Node Highlighting");
+		btnNodeHighlighting.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				frameNodeHighlighting.revalidate();
+				frameNodeHighlighting.setVisible(true);
+			}
+		});
+		return btnNodeHighlighting;
 	}
 	
 	private JButton instantiateORA() {

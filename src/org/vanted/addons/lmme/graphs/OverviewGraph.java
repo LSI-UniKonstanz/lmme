@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 import org.AttributeHelper;
 import org.graffiti.editor.MainFrame;
@@ -302,22 +303,20 @@ public class OverviewGraph {
 		}
 		
 		for (Node speciesNode : LMMEController.getInstance().getCurrentSession().getBaseGraph().getSpeciesNodes()) {
-			Collection<Node> inneighbors = speciesNode.getAllInNeighbors();
-			Collection<Node> outneighbors = speciesNode.getAllOutNeighbors();
-			HashSet<SubsystemGraph> inSystems = new HashSet<>();
-			HashSet<SubsystemGraph> outSystems = new HashSet<>();
-			for (Node reactionNode : inneighbors) {
+			
+			Set<Node> neighbours = speciesNode.getNeighbors();
+			
+			HashSet<SubsystemGraph> containingSystems = new HashSet<>();
+			for (Node reactionNode : neighbours) {
 				if (LMMETools.getInstance().isReaction(reactionNode)) {
-					inSystems.addAll(this.decomposition.getSubsystemsForReaction(reactionNode));
+					containingSystems.addAll(this.decomposition.getSubsystemsForReaction(reactionNode));
 				}
 			}
-			for (Node reactionNode : outneighbors) {
-				if (LMMETools.getInstance().isReaction(reactionNode)) {
-					outSystems.addAll(this.decomposition.getSubsystemsForReaction(reactionNode));
-				}
-			}
-			for (SubsystemGraph inSystem : inSystems) {
-				for (SubsystemGraph outSystem : outSystems) {
+			
+			// currently, interfaces correspond to undirected relationships between subsystems.
+			// may be changed in the future.
+			for (SubsystemGraph inSystem : containingSystems) {
+				for (SubsystemGraph outSystem : containingSystems) {
 					if (inSystem != outSystem) {
 						interfaceMap.get(inSystem).get(outSystem).add(speciesNode);
 					}

@@ -205,12 +205,12 @@ public class LMMEController {
 		}
 	}
 	
-	/**
-	 * Implements the action for the 'Aggregate Models' button in the Add-On tab.
-	 * <p>
-	 * Aggregates the graphs from all currently loaded views and sets the overall model as the {@link BaseGraph} for the decomposition.
-	 */
 	public void aggregateModelsAction() {
+//		aggregateModels();
+		setModelAction();
+	}
+	
+	private void aggregateModels() {
 		
 		Graph aggregatedGraph = new AdjListGraph();
 		aggregatedGraph.setName("Aggregated Model");
@@ -267,7 +267,7 @@ public class LMMEController {
 			String speciesName = AttributeHelper.getLabel(speciesNode, "");
 			
 			// only merge species, and ignore those with generic names such as 's234'
-			if (LMMETools.getInstance().isSpecies(speciesNode) && !speciesName.split(Pattern.quote("$"))[0].matches("s\\d+")) {
+			if (LMMETools.getInstance().isSpecies(speciesNode) && !speciesName.split(Pattern.quote("__"))[0].matches("s\\d+")) {
 				if (!label2NodeListMap.containsKey(speciesName)) {
 					label2NodeListMap.put(speciesName, new ArrayList<Node>());
 				}
@@ -289,7 +289,7 @@ public class LMMEController {
 		}
 		
 		MainFrame.getInstance().showGraph(aggregatedGraph, null);
-		setModelAction();
+//		setModelAction();
 		
 	}
 	
