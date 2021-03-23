@@ -21,8 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.HypergeometricDistributionImpl;
+import org.apache.commons.math3.distribution.HypergeometricDistribution;
 import org.graffiti.graph.Node;
 import org.vanted.addons.lmme.core.LMMEController;
 import org.vanted.addons.lmme.graphs.BaseGraph;
@@ -127,8 +126,7 @@ public class OverRepresentationAnalysis {
 		int referenceNumber = referenceMetaboliteNodes.size();
 		int differentiallyExpressedNumber = differentiallyExpressedMetaboliteNodes.size();
 		
-		HypergeometricDistributionImpl hgd = new HypergeometricDistributionImpl(referenceNumber,
-				differentiallyExpressedNumber, 0);
+		HypergeometricDistribution hgdist;
 		
 		int differentiallyExpressedInSubsystem;
 		int referenceInSubsystem;
@@ -152,18 +150,13 @@ public class OverRepresentationAnalysis {
 			}
 			differentiallyExpressedInSubsystem = differentialTemp.size();
 			referenceInSubsystem = referenceTemp.size();
-			hgd.setSampleSize(referenceInSubsystem);
+			hgdist = new HypergeometricDistribution(referenceNumber, differentiallyExpressedNumber, referenceInSubsystem);
 			
-			double cumulativeProbability = 0.0;
-			try {
-				// cumulating from the right, as we test one-tailed
-				cumulativeProbability = hgd.cumulativeProbability(differentiallyExpressedInSubsystem, referenceInSubsystem);
-			} catch (MathException e) {
-				e.printStackTrace();
-			}
+			double cumulativeProbability = hgdist.upperCumulativeProbability(differentiallyExpressedInSubsystem);
 			
 //			System.out.println("Subsystem " + subsystem.getName() + " has diff: " + differentiallyExpressedInSubsystem
 //					+ " and ref: " + referenceInSubsystem + " and p= " + cumulativeProbability);
+//			System.out.println(subsystem.getName() + ";" + cumulativeProbability);
 			
 			pValueMap.put(subsystem, Double.valueOf(cumulativeProbability));
 		}
