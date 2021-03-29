@@ -6,8 +6,8 @@
     <plugindesc>
         <name>lmme-dm</name>
         <main>org.vanted.addons.lmme.LMMEAddon</main>
-        <version>1.0.0</version>
-        <compatibility>2.7</compatibility>
+        <version>1.1.0</version>
+        <compatibility>2.8</compatibility>
         <available>https://www.cls.uni-konstanz.de/software/lmme</available>
     </plugindesc>
 </plugin>

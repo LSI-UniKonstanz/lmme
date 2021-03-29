@@ -135,10 +135,6 @@ public class ForceDirectedMMLayout implements MMOverviewLayout, MMSubsystemLayou
 	
 	@Override
 	public String getName() {
-		return name();
-	}
-	
-	public static String name() {
 		return "Force-Directed";
 	}
 	

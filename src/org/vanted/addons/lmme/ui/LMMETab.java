@@ -63,7 +63,7 @@ import org.vanted.addons.lmme.decomposition.MMDecompositionAlgorithm;
 import org.vanted.addons.lmme.graphs.BaseGraph;
 import org.vanted.addons.lmme.graphs.OverviewGraph;
 import org.vanted.addons.lmme.graphs.SubsystemGraph;
-import org.vanted.addons.lmme.layout.ForceDirectedMMLayout;
+import org.vanted.addons.lmme.layout.StressMinMMLayout;
 
 import info.clearthought.layout.TableLayout;
 import info.clearthought.layout.TableLayoutConstants;
@@ -653,7 +653,7 @@ public class LMMETab extends InspectorTab {
 		this.cbOverviewLayout = new JComboBox<>(cbListOverviewLayouts);
 		JPanel overviewLayoutSelect = combine(labelOverviewLayoutAlgo, this.cbOverviewLayout, Color.WHITE, false, true);
 		fpSettings.addGuiComponentRow(FolderPanel.getBorderedComponent(overviewLayoutSelect, 5, 0, 0, 0), null, true);
-		this.cbOverviewLayout.setSelectedItem(ForceDirectedMMLayout.name());
+		this.cbOverviewLayout.setSelectedItem(StressMinMMLayout.name());
 		
 		return fpSettings;
 	}
@@ -848,7 +848,7 @@ public class LMMETab extends InspectorTab {
 		JPanel subsystemLayoutSelect = combine(labelSubsystemLayoutAlgo, this.cbSubsystemLayout, Color.WHITE, false,
 				true);
 		fp.addGuiComponentRow(FolderPanel.getBorderedComponent(subsystemLayoutSelect, 5, 0, 5, 0), null, true);
-		this.cbSubsystemLayout.setSelectedItem(ForceDirectedMMLayout.name());
+		this.cbSubsystemLayout.setSelectedItem(StressMinMMLayout.name());
 		
 		this.ckbClearSubsView = new JCheckBox("Clear subsystem view before");
 		ckbClearSubsView.setSelected(true);
