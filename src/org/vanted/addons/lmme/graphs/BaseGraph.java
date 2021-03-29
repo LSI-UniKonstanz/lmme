@@ -19,10 +19,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import org.AttributeHelper;
 import org.graffiti.graph.AdjListGraph;
 import org.graffiti.graph.Edge;
 import org.graffiti.graph.Graph;
 import org.graffiti.graph.Node;
+import org.vanted.addons.lmme.core.LMMEConstants;
 import org.vanted.addons.lmme.core.LMMEController;
 import org.vanted.addons.lmme.core.LMMETools;
 
@@ -159,6 +161,7 @@ public class BaseGraph {
 			original2workingNodes.get(nodeToClone).clear();
 			for (Edge edge : workingNode.getEdges()) {
 				Node newNode = workingGraph.addNodeCopy(workingNode);
+				AttributeHelper.setAttribute(newNode, LMMEConstants.ATTRIBUTE_PATH, "isClone", true);
 				original2workingNodes.get(nodeToClone).add(newNode);
 				working2originalNodes.put(newNode, nodeToClone);
 				Node source, target;
