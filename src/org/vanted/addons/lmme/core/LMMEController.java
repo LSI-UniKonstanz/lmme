@@ -31,6 +31,7 @@ import org.AttributeHelper;
 import org.graffiti.editor.GraffitiInternalFrame;
 import org.graffiti.editor.GravistoService;
 import org.graffiti.editor.MainFrame;
+import org.graffiti.editor.MessageType;
 import org.graffiti.graph.AdjListGraph;
 import org.graffiti.graph.Graph;
 import org.graffiti.graph.Node;
@@ -55,6 +56,7 @@ import org.vanted.addons.lmme.layout.GridMMLayout;
 import org.vanted.addons.lmme.layout.MMOverviewLayout;
 import org.vanted.addons.lmme.layout.MMSubsystemLayout;
 import org.vanted.addons.lmme.layout.ParallelLinesMMLayout;
+import org.vanted.addons.lmme.layout.StressMinMMLayout;
 import org.vanted.addons.lmme.ui.LMMESubsystemViewManagement;
 import org.vanted.addons.lmme.ui.LMMETab;
 import org.vanted.addons.lmme.ui.LMMEViewManagement;
@@ -120,16 +122,19 @@ public class LMMEController {
 		decompositionAlgorithmsMap.put(diseaseMapPathwayDecomp.getName(), diseaseMapPathwayDecomp);
 //		decompositionAlgorithmsMap.put(girvanDecomp.getName(), girvanDecomp);
 		
+		StressMinMMLayout stressMinLayout = new StressMinMMLayout();
 		ForceDirectedMMLayout forceLayout = new ForceDirectedMMLayout();
 		ConcentricCirclesMMLayout concentricCircLayout = new ConcentricCirclesMMLayout();
 		ParallelLinesMMLayout parallelLinesLayout = new ParallelLinesMMLayout();
 		CircularMMLayout circularLayout = new CircularMMLayout();
 		GridMMLayout gridLayout = new GridMMLayout();
 		
+		overviewLayoutsMap.put(stressMinLayout.getName(), stressMinLayout);
 		overviewLayoutsMap.put(forceLayout.getName(), forceLayout);
 		overviewLayoutsMap.put(circularLayout.getName(), circularLayout);
 		overviewLayoutsMap.put(gridLayout.getName(), gridLayout);
 		
+		subsystemLayoutsMap.put(stressMinLayout.getName(), stressMinLayout);
 		subsystemLayoutsMap.put(forceLayout.getName(), forceLayout);
 		subsystemLayoutsMap.put(concentricCircLayout.getName(), concentricCircLayout);
 		subsystemLayoutsMap.put(parallelLinesLayout.getName(), parallelLinesLayout);
@@ -319,6 +324,7 @@ public class LMMEController {
 					MMDecomposition decomposition = decompositionAlgorithmsMap.get(tab.getDecompositionMethod())
 							.run(tab.getAddTransporterSubS());
 					currentSession.setOverviewGraph(new OverviewGraph(decomposition, tab.getShowInterfaces()));
+					MainFrame.showMessage("Calculating Layout ...", MessageType.PERMANENT_INFO);
 					SwingUtilities.invokeLater(new Runnable() {
 						public void run() {
 							LMMEViewManagement.getInstance()
