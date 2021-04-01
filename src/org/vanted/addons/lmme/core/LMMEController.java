@@ -187,7 +187,7 @@ public class LMMEController {
 		if (MainFrame.getInstance().getActiveEditorSession() != null) {
 			Graph graph = MainFrame.getInstance().getActiveEditorSession().getGraph();
 			SBMLSpeciesHelper helper = new SBMLSpeciesHelper(graph);
-			if (helper.getSpeciesNodes().isEmpty()) {
+			if (helper.getSpeciesNodes().isEmpty() || !graph.getName().endsWith(".xml")) {
 				JOptionPane.showMessageDialog(null, "The currently active graph is no SBML model.");
 				return;
 			}
