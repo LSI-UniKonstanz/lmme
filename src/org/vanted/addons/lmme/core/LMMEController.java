@@ -55,6 +55,7 @@ import org.vanted.addons.lmme.layout.ForceDirectedMMLayout;
 import org.vanted.addons.lmme.layout.GridMMLayout;
 import org.vanted.addons.lmme.layout.MMOverviewLayout;
 import org.vanted.addons.lmme.layout.MMSubsystemLayout;
+import org.vanted.addons.lmme.layout.MinervaDMLayout;
 import org.vanted.addons.lmme.layout.ParallelLinesMMLayout;
 import org.vanted.addons.lmme.layout.StressMinMMLayout;
 import org.vanted.addons.lmme.ui.LMMESubsystemViewManagement;
@@ -65,7 +66,6 @@ import de.ipk_gatersleben.ag_nw.graffiti.GraphHelper;
 import de.ipk_gatersleben.ag_nw.graffiti.NodeTools;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.gui.dbe.MergeNodes;
 import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBMLSpeciesHelper;
-import de.ipk_gatersleben.ag_nw.graffiti.plugins.ios.sbml.SBML_Constants;
 
 /**
  * This class controls and coordinates the actions of LMME.
@@ -128,6 +128,7 @@ public class LMMEController {
 		ParallelLinesMMLayout parallelLinesLayout = new ParallelLinesMMLayout();
 		CircularMMLayout circularLayout = new CircularMMLayout();
 		GridMMLayout gridLayout = new GridMMLayout();
+		MinervaDMLayout minervaLayout = new MinervaDMLayout();
 		
 		overviewLayoutsMap.put(stressMinLayout.getName(), stressMinLayout);
 		overviewLayoutsMap.put(forceLayout.getName(), forceLayout);
@@ -138,6 +139,7 @@ public class LMMEController {
 		subsystemLayoutsMap.put(forceLayout.getName(), forceLayout);
 		subsystemLayoutsMap.put(concentricCircLayout.getName(), concentricCircLayout);
 		subsystemLayoutsMap.put(parallelLinesLayout.getName(), parallelLinesLayout);
+		subsystemLayoutsMap.put(minervaLayout.getName(), minervaLayout);
 		
 	}
 	
@@ -176,6 +178,11 @@ public class LMMEController {
 		this.tab = tab;
 	}
 	
+	public void aggregateModelsAction() {
+//		aggregateModels();
+		setModelAction();
+	}
+	
 	/**
 	 * Implements the action for the 'Set Model' button in the Add-On tab.
 	 * <p>
@@ -210,17 +217,12 @@ public class LMMEController {
 		}
 	}
 	
-	public void aggregateModelsAction() {
-//		aggregateModels();
-		setModelAction();
-	}
-	
 	private void aggregateModels() {
 		
 		Graph aggregatedGraph = new AdjListGraph();
 		aggregatedGraph.setName("Aggregated Model");
 		Set<Session> session = new HashSet<Session>(MainFrame.getSessions());
-		HashSet<String> allUniqueNames = new HashSet<String>();
+//		HashSet<String> allUniqueNames = new HashSet<String>();
 		for (Session s : session) {
 			Graph tempGraph = new AdjListGraph();
 			tempGraph.addGraph(s.getGraph());
@@ -232,40 +234,40 @@ public class LMMEController {
 				}
 			}
 			
-			ArrayList<String> allNames = new ArrayList<String>();
-			HashSet<String> uniqueNames = new HashSet<String>();
-			
-			for (Node speciesNode : tempGraph.getNodes()) {
-				if (LMMETools.getInstance().isSpecies(speciesNode)) {
-					if (AttributeHelper.hasAttribute(speciesNode, SBML_Constants.SBML, SBML_Constants.SPECIES_COMPARTMENT_NAME)) {
-						String compName = (String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML,
-								SBML_Constants.SPECIES_COMPARTMENT_NAME, "", "");
-						allNames.add(compName);
-						uniqueNames.add(compName);
-						allUniqueNames.add(compName);
-					}
-				}
-			}
+//			ArrayList<String> allNames = new ArrayList<String>();
+//			HashSet<String> uniqueNames = new HashSet<String>();
+//			
+//			for (Node speciesNode : tempGraph.getNodes()) {
+//				if (LMMETools.getInstance().isSpecies(speciesNode)) {
+//					if (AttributeHelper.hasAttribute(speciesNode, SBML_Constants.SBML, SBML_Constants.SPECIES_COMPARTMENT_NAME)) {
+//						String compName = (String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML,
+//								SBML_Constants.SPECIES_COMPARTMENT_NAME, "", "");
+//						allNames.add(compName);
+//						uniqueNames.add(compName);
+//						allUniqueNames.add(compName);
+//					}
+//				}
+//			}
 			
 //			System.out.println(tempName + ":");
-			for (String compName : uniqueNames) {
-				int occurences = 0;
-				for (int i = 0; i < allNames.size(); i++) {
-					if (allNames.get(i).equals(compName)) {
-						occurences += 1;
-					}
-				}
+//			for (String compName : uniqueNames) {
+//				int occurences = 0;
+//				for (int i = 0; i < allNames.size(); i++) {
+//					if (allNames.get(i).equals(compName)) {
+//						occurences += 1;
+//					}
+//				}
 //				System.out.println("\t" + occurences + " occurences of " + compName);
-			}
+//			}
 			
 			aggregatedGraph.addGraph(tempGraph);
 			s.getGraph().setModified(false);
 			MainFrame.getInstance().getSessionManager().closeSession(s);
 		}
 //		System.out.println("All compartments:");
-		for (String compName : allUniqueNames) {
+//		for (String compName : allUniqueNames) {
 //			System.out.println("\t" + compName);
-		}
+//		}
 		
 		HashMap<String, ArrayList<Node>> label2NodeListMap = new HashMap<String, ArrayList<Node>>();
 		for (Node speciesNode : aggregatedGraph.getNodes()) {
@@ -282,6 +284,7 @@ public class LMMEController {
 		for (ArrayList<Node> nodesToMerge : label2NodeListMap.values()) {
 			if (nodesToMerge.size() > 1) {
 				Node newNode = MergeNodes.mergeNode(aggregatedGraph, nodesToMerge, NodeTools.getCenter(nodesToMerge), false);
+				AttributeHelper.setAttribute(newNode, "lmme_dm", "wasMerged", true);
 				aggregatedGraph.deleteAll(nodesToMerge);
 			}
 		}
@@ -294,7 +297,6 @@ public class LMMEController {
 		}
 		
 		MainFrame.getInstance().showGraph(aggregatedGraph, null);
-//		setModelAction();
 		
 	}
 	
