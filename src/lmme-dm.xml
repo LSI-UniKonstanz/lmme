@@ -5,7 +5,7 @@
     <description>Large Metabolic Model Explorer, for the visual exploration of large metabolic models using model decompositions.</description>
     <plugindesc>
         <name>lmme-dm</name>
-        <main>org.vanted.addons.lmme.LMMEAddon</main>
+        <main>org.vanted.addons.lmme_dm.LMMEAddon</main>
         <version>1.1.0</version>
         <compatibility>2.8</compatibility>
         <available>https://www.cls.uni-konstanz.de/software/lmme</available>

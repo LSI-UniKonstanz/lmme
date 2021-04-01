@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="jar" name="Create LMME Addon jar">
+<project default="jar" name="Create LMME-DM Addon jar">
 	<target name="jar">
 		<jar destfile="lmme-dm.jar" filesetmanifest="mergewithoutmain">
 			<fileset dir="bin" />
