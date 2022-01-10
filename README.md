@@ -41,7 +41,7 @@ git clone https://github.com/LSI-UniKonstanz/lmme.git
 If you have any questions, feedback, bug reports or feature requests, please do not hesitate to contact us via [E-Mail](mailto:michael.aichem@uni-konstanz.de).
 
 If you use LMME in or for a scientific publication, please cite our latest publication:
-> Michael Aichem, Tobias Czauderna, Yan Zhu, Jinxin Zhao, Matthias Klapperstück, Karsten Klein, Jian Li, Falk Schreiber. [Visual Exploration of Large Metabolic Models](https://doi.org/10.1093/bioinformatics/btab335). Bioinformatics, btab335 (2021).
+> Michael Aichem, Tobias Czauderna, Yan Zhu, Jinxin Zhao, Matthias Klapperstück, Karsten Klein, Jian Li, Falk Schreiber. [Visual Exploration of Large Metabolic Models](https://doi.org/10.1093/bioinformatics/btab335). Bioinformatics, Volume 37, Issue 23, Pages 4460–4468 (2021).
 
 ## License
 **LMME** is free software: you can redistribute it and/or modify it under the terms of the [GNU General Public License](https://www.gnu.org/licenses/) as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
