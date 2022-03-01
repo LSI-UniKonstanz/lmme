@@ -75,20 +75,27 @@ public class CompartmentMMDecomposition extends MMDecompositionAlgorithm {
 			for (Node speciesNode : baseGraph.getSpeciesNodes()) {
 				if (compartment.equals((String) AttributeHelper.getAttributeValue(speciesNode, SBML_Constants.SBML,
 						SBML_Constants.COMPARTMENT, "", ""))) {
-					if (!alreadyClassifiedNodes.contains(speciesNode)) {
-						subsystem.addSpecies(speciesNode);
-						Collection<Edge> edgeSet = speciesNode.getEdges();
-						for (Edge edge : edgeSet) {
-							Node neighbor;
-							if (edge.getSource() == speciesNode) {
-								neighbor = edge.getTarget();
-							} else {
-								neighbor = edge.getSource();
+					subsystem.addSpecies(speciesNode);
+					Collection<Edge> edgeSet = speciesNode.getEdges();
+					for (Edge edge : edgeSet) {
+						Node neighbor;
+						if (edge.getSource() == speciesNode) {
+							neighbor = edge.getTarget();
+						} else {
+							neighbor = edge.getSource();
+						}
+						if (!alreadyClassifiedNodes.contains(neighbor)) {
+							subsystem.addReaction(neighbor);
+							alreadyClassifiedNodes.add(neighbor);
+							for (Edge incidentEdge : neighbor.getEdges()) {
+								subsystem.addEdge(incidentEdge);
+								if (incidentEdge.getSource() == neighbor) {
+									subsystem.addSpecies(incidentEdge.getTarget());
+								} else {
+									subsystem.addSpecies(incidentEdge.getSource());
+								}
 							}
-							if (!alreadyClassifiedNodes.contains(neighbor)) {
-								subsystem.addReaction(neighbor);
-								subsystem.addEdge(edge);
-							}
+							subsystem.addEdge(edge);
 						}
 					}
 				}
@@ -129,7 +136,7 @@ public class CompartmentMMDecomposition extends MMDecompositionAlgorithm {
 	
 	@Override
 	public boolean requiresTransporterSubsystem() {
-		return true;
+		return false;
 	}
 	
 }

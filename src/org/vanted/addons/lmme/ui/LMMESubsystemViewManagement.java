@@ -49,6 +49,8 @@ public class LMMESubsystemViewManagement {
 	
 	private HashMap<SubsystemGraph, Color> colorMap;
 	
+	private HashMap<Node, String> node2SubsystemName;
+	
 	/**
 	 * The size of a node in the resulting drawing of the consolidated subsystem graph.
 	 */
@@ -80,6 +82,7 @@ public class LMMESubsystemViewManagement {
 		};
 		defaultColor = Color.GRAY;
 		colorMap = new HashMap<>();
+		node2SubsystemName = new HashMap<>();
 	}
 	
 	public static synchronized LMMESubsystemViewManagement getInstance() {
@@ -163,6 +166,8 @@ public class LMMESubsystemViewManagement {
 	 */
 	private void updateView(boolean useColor) {
 		
+		node2SubsystemName.clear();
+		
 		BaseGraph baseGraph = LMMEController.getInstance().getCurrentSession().getBaseGraph();
 		
 		Graph consolidatedSubsystemGraph = new AdjListGraph(
@@ -178,6 +183,7 @@ public class LMMESubsystemViewManagement {
 			for (Node speciesNode : subsystem.getSpeciesNodes()) {
 				if (!nodes2newNodes.keySet().contains(speciesNode)) {
 					Node newNode = consolidatedSubsystemGraph.addNodeCopy(speciesNode);
+					node2SubsystemName.put(newNode, subsystem.getName());
 					AttributeHelper.setSize(newNode, nodeSize, nodeSize);
 					nodes2newNodes.put(speciesNode, newNode);
 					if (useColor) {
@@ -188,6 +194,7 @@ public class LMMESubsystemViewManagement {
 			for (Node reactionNode : subsystem.getReactionNodes()) {
 				if (!nodes2newNodes.keySet().contains(reactionNode)) {
 					Node newNode = consolidatedSubsystemGraph.addNodeCopy(reactionNode);
+					node2SubsystemName.put(newNode, subsystem.getName());
 					AttributeHelper.setSize(newNode, nodeSize, nodeSize);
 					nodes2newNodes.put(reactionNode, newNode);
 					if (useColor) {
@@ -221,6 +228,7 @@ public class LMMESubsystemViewManagement {
 							} else {
 								AttributeHelper.setFillColor(nodes2newNodes.get(interfaceNode), Color.WHITE);
 							}
+							node2SubsystemName.remove(nodes2newNodes.get(interfaceNode));
 							for (Edge inEdge : interfaceNode.getAllInEdges()) {
 								if (nodes2newNodes.keySet().contains(inEdge.getSource())
 										&& !addedEdges.contains(inEdge)) {
@@ -244,6 +252,16 @@ public class LMMESubsystemViewManagement {
 			}
 		}
 		LMMEViewManagement.getInstance().showAsSubsystemGraph(consolidatedSubsystemGraph);
+	}
+	
+	/**
+	 * Returns the name of the subsystem that the specified node belongs to. If the node is an interface node, {@code null} is returned.
+	 * 
+	 * @param node
+	 * @return
+	 */
+	public String getSubsystemName(Node node) {
+		return node2SubsystemName.get(node);
 	}
 	
 	/**
