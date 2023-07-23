@@ -59,7 +59,6 @@ public class LMMESubsystemViewManagement {
 	private LMMESubsystemViewManagement() {
 		this.currentSubsystems = new ArrayList<>();
 		colors = new Color[] {
-				new Color(126, 88, 57),
 				new Color(95, 64, 255),
 				new Color(145, 220, 72),
 				new Color(189, 83, 214),
@@ -78,7 +77,8 @@ public class LMMESubsystemViewManagement {
 				new Color(55, 45, 61),
 				new Color(199, 194, 158),
 				new Color(118, 44, 51),
-				new Color(82, 119, 124)
+				new Color(82, 119, 124),
+				new Color(126, 88, 57)
 		};
 		defaultColor = Color.GRAY;
 		colorMap = new HashMap<>();
