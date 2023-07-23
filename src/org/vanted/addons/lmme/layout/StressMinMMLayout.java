@@ -39,7 +39,7 @@ public class StressMinMMLayout implements MMOverviewLayout, MMSubsystemLayout {
 	
 	@Override
 	public void layOutAsSubsystems(Graph graph) {
-		layOut(graph);
+		layOut(graph, 2);
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				ZoomFitChangeComponent.zoomRegion(false, LMMEViewManagement.getInstance().getSubsystemFrame().getView());
@@ -50,7 +50,7 @@ public class StressMinMMLayout implements MMOverviewLayout, MMSubsystemLayout {
 	
 	@Override
 	public void layOutAsOverview(Graph graph) {
-		layOut(graph);
+		layOut(graph, 3);
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				ZoomFitChangeComponent.zoomRegion(false, LMMEViewManagement.getInstance().getOverviewFrame().getView());
@@ -59,7 +59,7 @@ public class StressMinMMLayout implements MMOverviewLayout, MMSubsystemLayout {
 		});
 	}
 	
-	private void layOut(Graph graph) {
+	private void layOut(Graph graph, int edgeScalingFactor) { // add edgeScalingFactor as parameter, distinguish between OV and detail 2/3?
 		IndexedNodeSet workNodes = IndexedNodeSet.setOfAllIn(graph.getNodes());
 		List<IndexedComponent> components = IndexedGraphOperations.getComponents(workNodes);
 		HashMap<Node, Vector2d> nodes2NewPositions = new HashMap<>();
@@ -78,8 +78,8 @@ public class StressMinMMLayout implements MMOverviewLayout, MMSubsystemLayout {
 					0.001,
 					0,
 					0,
-					350,
-					3);
+					50,
+					edgeScalingFactor);
 			impl.calculateLayout();
 			nodes2NewPositions.putAll(impl.getLayoutSupplier().get());
 		}
