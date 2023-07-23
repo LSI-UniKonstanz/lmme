@@ -144,7 +144,8 @@ public class LMMETab extends InspectorTab {
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
-						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM } }));
+						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
+						TableLayoutConstants.MINIMUM, 5.0 } }));
 		mainPanel.setBackground(Color.WHITE);
 		
 		int rowCount = 1;
