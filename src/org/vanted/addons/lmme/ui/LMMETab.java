@@ -58,6 +58,7 @@ import org.jfree.data.statistics.HistogramDataset;
 import org.vanted.addons.lmme.core.LMMEController;
 import org.vanted.addons.lmme.core.LMMESession;
 import org.vanted.addons.lmme.decomposition.MMDecompositionAlgorithm;
+import org.vanted.addons.lmme.decomposition.SchusterMMDecomposition;
 import org.vanted.addons.lmme.graphs.BaseGraph;
 import org.vanted.addons.lmme.graphs.OverviewGraph;
 import org.vanted.addons.lmme.layout.StressMinMMLayout;
@@ -531,7 +532,8 @@ public class LMMETab extends InspectorTab {
 				fpSettings.layoutRows();
 			}
 		});
-		cbDecompMethod.setSelectedIndex(0);
+		cbDecompMethod.setSelectedItem(SchusterMMDecomposition.name());
+		// cbDecompMethod.setSelectedIndex(0);
 		
 		this.ckbAddTransporterSubS = new JCheckBox("Add Transporter Subsystem");
 		this.ckbAddTransporterSubS

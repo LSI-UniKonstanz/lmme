@@ -154,6 +154,10 @@ public class SchusterMMDecomposition extends MMDecompositionAlgorithm {
 	
 	@Override
 	public String getName() {
+		return name();
+	}
+	
+	public static String name() {
 		return "Schuster et al.";
 	}
 	
