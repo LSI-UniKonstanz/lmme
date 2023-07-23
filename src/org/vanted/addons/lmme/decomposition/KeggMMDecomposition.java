@@ -79,7 +79,7 @@ public class KeggMMDecomposition extends MMDecompositionAlgorithm implements Nee
 	/**
 	 * The rest service for the KEGG requests.
 	 */
-	private RestService restService = new RestService("http://rest.kegg.jp/get/");
+	private RestService restService = new RestService("https://rest.kegg.jp/get/");
 	
 	private HashMap<Node, ArrayList<String>> node2possibleSubsystems;
 	private HashMap<String, Integer> subsystem2number;
