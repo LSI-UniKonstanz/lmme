@@ -85,6 +85,11 @@ public class BaseGraph {
 			} else if (LMMETools.getInstance().isReaction(node)) {
 				originalReactionNodes.add(node);
 			}
+			// avoid automatic background coloring
+			AttributeHelper.deleteAttribute(node, "cluster", "cluster");
+		}
+		for (Edge edge : originalGraph.getEdges()) {
+			AttributeHelper.setOpacity(edge, 0.7);
 		}
 		
 		this.workingGraph = new AdjListGraph();

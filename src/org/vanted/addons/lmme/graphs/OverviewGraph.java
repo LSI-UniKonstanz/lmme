@@ -137,10 +137,14 @@ public class OverviewGraph {
 							}
 							Node interfaceNodeOG = interfaceToNewNodeMap.get(interfaceNode);
 							if (!interfaceNodeOG.getNeighbors().contains(sourceNode)) {
-								graph.addEdge(sourceNode, interfaceNodeOG, false, AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
+								Edge addedEdge = graph.addEdge(sourceNode, interfaceNodeOG, false,
+										AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
+								AttributeHelper.setOpacity(addedEdge, 0.7);
 							}
 							if (!interfaceNodeOG.getNeighbors().contains(targetNode)) {
-								graph.addEdge(targetNode, interfaceNodeOG, false, AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
+								Edge addedEdge = graph.addEdge(targetNode, interfaceNodeOG, false,
+										AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
+								AttributeHelper.setOpacity(addedEdge, 0.7);
 							}
 						}
 					} else {
@@ -149,6 +153,7 @@ public class OverviewGraph {
 						Edge addedEdge = graph.addEdge(sourceNode, targetNode, false,
 								AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
 						edgeToInterfacesMap.put(addedEdge, interfaces);
+						AttributeHelper.setOpacity(addedEdge, 0.7);
 					}
 					
 				}
