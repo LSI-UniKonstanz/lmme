@@ -57,27 +57,27 @@ public class ParallelLinesMMLayout implements MMSubsystemLayout {
 		
 		layoutTools.crossingMin(species, reactions);
 		
-		int xSpan = Math.max(60 * species.size(), 60 * reactions.size());
+		int ySpan = Math.max(60 * species.size(), 60 * reactions.size());
 		
-		int xPos = 0;
-		int xStep = xSpan / species.size();
+		int yStep = ySpan / species.size();
+		int yPos = yStep / 2;
 		for (int i = 0; i < species.size(); i++) {
-			AttributeHelper.setPosition(species.get(i), xPos, 100);
-			xPos += xStep;
+			AttributeHelper.setPosition(species.get(i), 500, yPos);
+			yPos += yStep;
 		}
 		
-		xPos = 0;
-		xStep = xSpan / reactions.size();
+		yStep = ySpan / reactions.size();
+		yPos = yStep / 2;
 		for (int i = 0; i < reactions.size(); i++) {
-			AttributeHelper.setPosition(reactions.get(i), xPos, 700);
-			xPos += xStep;
+			AttributeHelper.setPosition(reactions.get(i), 100, yPos);
+			yPos += yStep;
 		}
 		
 	}
 	
 	@Override
 	public String getName() {
-		return "Bipartite Graph";
+		return "Parallel Lines";
 	}
 	
 }
