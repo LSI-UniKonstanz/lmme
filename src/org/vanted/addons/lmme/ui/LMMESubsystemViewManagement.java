@@ -286,4 +286,8 @@ public class LMMESubsystemViewManagement {
 		}
 	}
 	
+	public int getNodeSize() {
+		return nodeSize;
+	}
+	
 }

@@ -37,6 +37,8 @@ public class LMMEConstants {
 	public static final String TRANSPORTER_SUBSYSTEM = "Transport Reactions (algorithmically derived)";
 	public static final String DEFAULT_SUBSYSTEM = "Default Subsystem (algorithmically derived)";
 	
+	public static final String FLUX_ATTRIBUTE = "flux";
+	
 	/**
 	 * These are the global and overview pathway maps from KEGG.
 	 * <p>
