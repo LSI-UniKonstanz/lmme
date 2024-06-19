@@ -120,6 +120,7 @@ public class LMMETab extends InspectorTab {
 	
 	private JCheckBox ckbClearSubsView;
 	private JCheckBox ckbUseColorMapping;
+	private JCheckBox ckbShowRelatedSubsystems;
 	
 	private final int defaultSplitDeg = 15;
 	private JSlider sliderSplitDeg;
@@ -894,6 +895,11 @@ public class LMMETab extends InspectorTab {
 		ckbUseColorMapping.setBackground(Color.WHITE);
 		fp.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbUseColorMapping, 5, 0, 0, 0), null, true);
 		
+		this.ckbShowRelatedSubsystems = new JCheckBox("Show related subsystems");
+		ckbShowRelatedSubsystems.setSelected(false);
+		ckbShowRelatedSubsystems.setBackground(Color.WHITE);
+		fp.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbShowRelatedSubsystems, 5, 0, 0, 0), null, true);
+		
 		return fp;
 	}
 	
@@ -1169,6 +1175,15 @@ public class LMMETab extends InspectorTab {
 	 */
 	public boolean getCkbUseColorMapping() {
 		return this.ckbUseColorMapping.isSelected();
+	}
+	
+	/**
+	 * Returns whether the show related subsystems checkbox is currently selected.
+	 * 
+	 * @return whether the show related subsystems checkbox is currently selected
+	 */
+	public boolean getCkbShowRelatedSubsystems() {
+		return this.ckbShowRelatedSubsystems.isSelected();
 	}
 	
 	/**

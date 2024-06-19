@@ -39,6 +39,11 @@ public class LMMEConstants {
 	
 	public static final String FLUX_ATTRIBUTE = "flux";
 	
+	public static final String NODETYPE_ATTRIBUTE_NAME = "nodetype";
+	public static final String NODETYPE_REACTION = "reaction";
+	public static final String NODETYPE_SPECIES = "species";
+	public static final String NODETYPE_SUBSYSTEM = "subsystem";
+	
 	/**
 	 * These are the global and overview pathway maps from KEGG.
 	 * <p>

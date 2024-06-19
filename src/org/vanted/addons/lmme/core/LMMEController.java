@@ -259,7 +259,7 @@ public class LMMEController {
 			ArrayList<SubsystemGraph> selectedSubsystems = this.currentSession.getOverviewGraph().getSelectedSubsystems();
 			if (!selectedSubsystems.isEmpty()) {
 				LMMESubsystemViewManagement.getInstance().showSubsystems(selectedSubsystems,
-						this.tab.getClearSubsystemView(), this.tab.getCkbUseColorMapping());
+						this.tab.getClearSubsystemView(), this.tab.getCkbUseColorMapping(), this.tab.getCkbShowRelatedSubsystems());
 				this.subsystemLayoutsMap.get(this.tab.getSubsystemLayoutMethod())
 						.layOutAsSubsystems(LMMEViewManagement.getInstance().getSubsystemFrame().getView().getGraph());
 			} else {

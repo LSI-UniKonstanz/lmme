@@ -19,8 +19,11 @@ import java.util.ArrayList;
 import org.AttributeHelper;
 import org.graffiti.graph.Graph;
 import org.graffiti.graph.Node;
+import org.vanted.addons.lmme.core.LMMEConstants;
+import org.vanted.addons.lmme.core.LMMEController;
 import org.vanted.addons.lmme.core.LMMETools;
 import org.vanted.addons.lmme.graphs.SubsystemGraph;
+import org.vanted.addons.lmme.ui.LMMESubsystemViewManagement;
 
 /**
  * A concentric circles layout for a {@link SubsystemGraph}.
@@ -47,37 +50,62 @@ public class ConcentricCirclesMMLayout implements MMSubsystemLayout {
 		
 		ArrayList<Node> species = new ArrayList<>();
 		ArrayList<Node> reactions = new ArrayList<>();
+		ArrayList<Node> subsystems = new ArrayList<>();
 		for (Node node : graph.getNodes()) {
 			if (tools.isSpecies(node)) {
 				species.add(node);
 			} else if (tools.isReaction(node)) {
 				reactions.add(node);
+			} else if (LMMEController.getInstance().getCurrentSession().getNodeAttribute(node, LMMEConstants.NODETYPE_ATTRIBUTE_NAME)
+					.equals(LMMEConstants.NODETYPE_SUBSYSTEM)) {
+				subsystems.add(node);
 			}
 		}
 		
-		layoutTools.crossingMin(species, reactions);
+		if (!subsystems.isEmpty()) {
+			layoutTools.threeLayerCrossingMin(reactions, species, subsystems);
+		} else {
+			layoutTools.twoLayerCrossingMin(species, reactions);
+		}
 		
-		double circumference = Math.max(30 * species.size(), 30 * reactions.size());
-		int minRad = (int) Math.round(circumference / (2 * Math.PI));
-		int maxRad = 2 * minRad;
-		int center = maxRad + 100;
+		int nodeSize = LMMESubsystemViewManagement.getInstance().getNodeSize();
+		int subsystemNodeSize = LMMESubsystemViewManagement.getInstance().getSubsystemNodeSize();
+		
+		double circumferenceReactions = (Math.sqrt(2) * nodeSize + 10) * reactions.size();
+		double circumferenceSpecies = (nodeSize + 10) * species.size();
+		double circumferenceSubsystems = (Math.sqrt(2) * subsystemNodeSize + 10) * subsystems.size();
+		
+		double circumference = (double) Math.max(Math.max(circumferenceReactions, circumferenceSpecies / 1.5), circumferenceSubsystems / 2.0);
+		
+		int radReactions = (int) Math.round(circumference / (2 * Math.PI));
+		int radSpecies = (int) Math.round(radReactions < 400 ? radReactions + 200 : radReactions * 1.5);
+		int radSubsystems = (int) Math.round(radReactions < 400 ? radReactions + 400 : radReactions * 2.0);
+		
+		int center = radSubsystems + 100;
 		for (int i = 0; i < reactions.size(); i++) {
 			
 			int xPos = (int) Math
-					.round(center + minRad * Math.cos((((double) i) / ((double) reactions.size())) * 2 * Math.PI));
+					.round(center + radReactions * Math.cos((((double) i) / ((double) reactions.size())) * 2 * Math.PI));
 			int yPos = (int) Math
-					.round(center + minRad * Math.sin((((double) i) / ((double) reactions.size())) * 2 * Math.PI));;
+					.round(center + radReactions * Math.sin((((double) i) / ((double) reactions.size())) * 2 * Math.PI));;
 			AttributeHelper.setPosition(reactions.get(i), xPos, yPos);
 		}
 		for (int i = 0; i < species.size(); i++) {
 			
 			int xPos = (int) Math
-					.round(center + maxRad * Math.cos((((double) i) / ((double) species.size())) * 2 * Math.PI));
+					.round(center + radSpecies * Math.cos((((double) i) / ((double) species.size())) * 2 * Math.PI));
 			int yPos = (int) Math
-					.round(center + maxRad * Math.sin((((double) i) / ((double) species.size())) * 2 * Math.PI));;
+					.round(center + radSpecies * Math.sin((((double) i) / ((double) species.size())) * 2 * Math.PI));;
 			AttributeHelper.setPosition(species.get(i), xPos, yPos);
 		}
-		
+		for (int i = 0; i < subsystems.size(); i++) {
+			
+			int xPos = (int) Math
+					.round(center + radSubsystems * Math.cos((((double) i) / ((double) subsystems.size())) * 2 * Math.PI));
+			int yPos = (int) Math
+					.round(center + radSubsystems * Math.sin((((double) i) / ((double) subsystems.size())) * 2 * Math.PI));;
+			AttributeHelper.setPosition(subsystems.get(i), xPos, yPos);
+		}
 	}
 	
 	@Override

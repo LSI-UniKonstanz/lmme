@@ -25,6 +25,7 @@ import org.graffiti.graph.AdjListGraph;
 import org.graffiti.graph.Edge;
 import org.graffiti.graph.Graph;
 import org.graffiti.graph.Node;
+import org.vanted.addons.lmme.core.LMMEConstants;
 import org.vanted.addons.lmme.core.LMMEController;
 import org.vanted.addons.lmme.graphs.BaseGraph;
 import org.vanted.addons.lmme.graphs.SubsystemGraph;
@@ -52,9 +53,13 @@ public class LMMESubsystemViewManagement {
 	private HashMap<Node, String> node2SubsystemName;
 	
 	/**
-	 * The size of a node in the resulting drawing of the consolidated subsystem graph.
+	 * The size of a species or reaction node in the resulting drawing of the consolidated subsystem graph.
 	 */
 	private final int nodeSize = 50;
+	/**
+	 * The size of a subsystem node in the resulting drawing of the consolidated subsystem graph.
+	 */
+	private final int subsystemNodeSize = 100;
 	
 	private LMMESubsystemViewManagement() {
 		this.currentSubsystems = new ArrayList<>();
@@ -105,7 +110,7 @@ public class LMMESubsystemViewManagement {
 	 * @param useColor
 	 *           whether a color mapping shall be used between the overview graph and the subsystems view
 	 */
-	public void showSubsystems(ArrayList<SubsystemGraph> subsystems, boolean clearView, boolean useColor) {
+	public void showSubsystems(ArrayList<SubsystemGraph> subsystems, boolean clearView, boolean useColor, boolean showRelatedSubsystems) {
 		
 		if ((LMMEViewManagement.getInstance().getSubsystemFrame() == null)
 				|| (LMMEViewManagement.getInstance().getSubsystemFrame().isClosed() == true)) {
@@ -138,7 +143,7 @@ public class LMMESubsystemViewManagement {
 			}
 		}
 		
-		updateView(useColor);
+		updateView(useColor, showRelatedSubsystems);
 		
 		for (SubsystemGraph subsystem : currentSubsystems) {
 			if (useColor) {
@@ -164,7 +169,7 @@ public class LMMESubsystemViewManagement {
 	 * @param useColor
 	 *           whether a color mapping shall be used between the overview graph and the subsystems view
 	 */
-	private void updateView(boolean useColor) {
+	private void updateView(boolean useColor, boolean showRelatedSubsystems) {
 		
 		node2SubsystemName.clear();
 		
@@ -183,6 +188,8 @@ public class LMMESubsystemViewManagement {
 			for (Node speciesNode : subsystem.getSpeciesNodes()) {
 				if (!nodes2newNodes.keySet().contains(speciesNode)) {
 					Node newNode = consolidatedSubsystemGraph.addNodeCopy(speciesNode);
+					LMMEController.getInstance().getCurrentSession().addNodeAttribute(newNode, LMMEConstants.NODETYPE_ATTRIBUTE_NAME,
+							LMMEConstants.NODETYPE_SPECIES);
 					node2SubsystemName.put(newNode, subsystem.getName());
 					AttributeHelper.setSize(newNode, nodeSize, nodeSize);
 					nodes2newNodes.put(speciesNode, newNode);
@@ -194,6 +201,8 @@ public class LMMESubsystemViewManagement {
 			for (Node reactionNode : subsystem.getReactionNodes()) {
 				if (!nodes2newNodes.keySet().contains(reactionNode)) {
 					Node newNode = consolidatedSubsystemGraph.addNodeCopy(reactionNode);
+					LMMEController.getInstance().getCurrentSession().addNodeAttribute(newNode, LMMEConstants.NODETYPE_ATTRIBUTE_NAME,
+							LMMEConstants.NODETYPE_REACTION);
 					node2SubsystemName.put(newNode, subsystem.getName());
 					AttributeHelper.setSize(newNode, nodeSize, nodeSize);
 					nodes2newNodes.put(reactionNode, newNode);
@@ -223,6 +232,8 @@ public class LMMESubsystemViewManagement {
 							processedInterfaces.add(interfaceNode);
 							if (!nodes2newNodes.keySet().contains(interfaceNode)) {
 								Node newNode = consolidatedSubsystemGraph.addNodeCopy(interfaceNode);
+								LMMEController.getInstance().getCurrentSession().addNodeAttribute(newNode, LMMEConstants.NODETYPE_ATTRIBUTE_NAME,
+										LMMEConstants.NODETYPE_SPECIES);
 								AttributeHelper.setSize(newNode, nodeSize, nodeSize);
 								nodes2newNodes.put(interfaceNode, newNode);
 							} else {
@@ -251,6 +262,47 @@ public class LMMESubsystemViewManagement {
 				}
 			}
 		}
+		
+		if (showRelatedSubsystems) {
+			HashMap<Node, HashSet<Node>> edgesToAdd = new HashMap<Node, HashSet<Node>>();
+			ArrayList<SubsystemGraph> allSubsystems = LMMEController.getInstance().getCurrentSession().getOverviewGraph().getDecomposition().getSubsystems();
+			for (SubsystemGraph focusedSystem : currentSubsystems) {
+				for (SubsystemGraph relatedSubsystem : allSubsystems) {
+					if (!currentSubsystems.contains(relatedSubsystem)) {
+						ArrayList<Node> interfaces = LMMEController.getInstance().getCurrentSession().getOverviewGraph().getInterfaceNodes(focusedSystem,
+								relatedSubsystem);
+						interfaces.addAll(LMMEController.getInstance().getCurrentSession().getOverviewGraph().getInterfaceNodes(relatedSubsystem,
+								focusedSystem));
+						for (Node interfaceNode : interfaces) {
+							if (nodes2newNodes.keySet().contains(interfaceNode)) {
+								Node subsystemNode = LMMEController.getInstance().getCurrentSession().getOverviewGraph().getNodeOfSubsystem(relatedSubsystem);
+								if (!nodes2newNodes.keySet().contains(subsystemNode)) {
+									Node newNode = consolidatedSubsystemGraph.addNodeCopy(subsystemNode);
+									LMMEController.getInstance().getCurrentSession().addNodeAttribute(newNode, LMMEConstants.NODETYPE_ATTRIBUTE_NAME,
+											LMMEConstants.NODETYPE_SUBSYSTEM);
+									AttributeHelper.setSize(newNode, subsystemNodeSize, subsystemNodeSize);
+									nodes2newNodes.put(subsystemNode, newNode);
+								}
+								if (!edgesToAdd.containsKey(interfaceNode)) {
+									edgesToAdd.put(interfaceNode, new HashSet<Node>());
+								}
+								edgesToAdd.get(interfaceNode).add(subsystemNode);
+							}
+							
+						}
+					}
+				}
+			}
+			for (Node interfaceNode : edgesToAdd.keySet()) {
+				for (Node subsystemNode : edgesToAdd.get(interfaceNode)) {
+					Edge addedEdge = consolidatedSubsystemGraph.addEdge(nodes2newNodes.get(interfaceNode), nodes2newNodes.get(subsystemNode), false,
+							AttributeHelper.getDefaultGraphicsAttributeForEdge(Color.BLACK, Color.BLACK, false));
+					AttributeHelper.setOpacity(addedEdge, 0.7);
+				}
+			}
+			
+		}
+		
 		LMMEViewManagement.getInstance().showAsSubsystemGraph(consolidatedSubsystemGraph);
 	}
 	
@@ -288,6 +340,10 @@ public class LMMESubsystemViewManagement {
 	
 	public int getNodeSize() {
 		return nodeSize;
+	}
+	
+	public int getSubsystemNodeSize() {
+		return subsystemNodeSize;
 	}
 	
 }
