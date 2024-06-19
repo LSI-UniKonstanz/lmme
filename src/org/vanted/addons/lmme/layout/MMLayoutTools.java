@@ -49,7 +49,7 @@ public class MMLayoutTools {
 	 * @param layer2
 	 *           the second layer
 	 */
-	public void crossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2) {
+	public void twoLayerCrossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2) {
 		ArrayList<Node> currentMinL1;
 		ArrayList<Node> currentMinL2;
 		ArrayList<Node> workCopyL1 = (ArrayList<Node>) layer1.clone();
@@ -60,7 +60,7 @@ public class MMLayoutTools {
 		for (int i = 0; i < 5; i++) {
 			Collections.shuffle(workCopyL1);
 			Collections.shuffle(workCopyL2);
-			crossingMin(workCopyL1, workCopyL2, -1);
+			twoLayerCrossingMin(workCopyL1, workCopyL2, -1);
 			int noc = numberOfCrossings(workCopyL1, workCopyL2);
 			if (noc < currentMin) {
 				currentMin = noc;
@@ -77,8 +77,8 @@ public class MMLayoutTools {
 	}
 	
 	/**
-	 * A helper function for the crossing minimisation. It calculates the
-	 * barycenters of the nodes and sorts the layers according to their barycenters.
+	 * Helper function for the two layer crossing minimisation. It recursively applies re-ordering until there is
+	 * no reduction in the number of crossings anymore.
 	 * 
 	 * @param layer1
 	 *           first layer
@@ -87,25 +87,107 @@ public class MMLayoutTools {
 	 * @param numberOfCrossings
 	 *           the current best result
 	 */
-	private void crossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2, int numberOfCrossings) {
+	private void twoLayerCrossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2, int numberOfCrossings) {
+		reorderLayer(layer1, layer2);
+		int newNumberOfCrossings = numberOfCrossings(layer1, layer2);
+		if (numberOfCrossings == -1 || newNumberOfCrossings < numberOfCrossings) {
+			twoLayerCrossingMin(layer2, layer1, newNumberOfCrossings);
+		}
+	}
+	
+	/**
+	 * Applies the barycenter heuristic for three layer crossing
+	 * minimisation, choosing the best result out of five.
+	 * 
+	 * @param layer1
+	 *           the first layer
+	 * @param layer2
+	 *           the second layer
+	 * @param layer3
+	 *           the third layer
+	 */
+	public void threeLayerCrossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2, ArrayList<Node> layer3) {
+		ArrayList<Node> currentMinL1;
+		ArrayList<Node> currentMinL2;
+		ArrayList<Node> currentMinL3;
+		ArrayList<Node> workCopyL1 = (ArrayList<Node>) layer1.clone();
+		ArrayList<Node> workCopyL2 = (ArrayList<Node>) layer2.clone();
+		ArrayList<Node> workCopyL3 = (ArrayList<Node>) layer3.clone();
+		int currentMin = numberOfCrossings(workCopyL1, workCopyL2) + numberOfCrossings(workCopyL2, workCopyL3);
+		currentMinL1 = (ArrayList<Node>) workCopyL1.clone();
+		currentMinL2 = (ArrayList<Node>) workCopyL2.clone();
+		currentMinL3 = (ArrayList<Node>) workCopyL3.clone();
+		for (int i = 0; i < 5; i++) {
+			Collections.shuffle(workCopyL1);
+			Collections.shuffle(workCopyL2);
+			Collections.shuffle(workCopyL3);
+			threeLayerCrossingMin(workCopyL1, workCopyL2, workCopyL3, currentMin);
+			int noc = numberOfCrossings(workCopyL1, workCopyL2) + numberOfCrossings(workCopyL2, workCopyL3);
+			if (noc < currentMin) {
+				currentMin = noc;
+				currentMinL1 = (ArrayList<Node>) workCopyL1.clone();
+				currentMinL2 = (ArrayList<Node>) workCopyL2.clone();
+				currentMinL3 = (ArrayList<Node>) workCopyL3.clone();
+			}
+		}
+		for (int i = 0; i < layer1.size(); i++) {
+			layer1.set(i, currentMinL1.get(i));
+		}
+		for (int i = 0; i < layer2.size(); i++) {
+			layer2.set(i, currentMinL2.get(i));
+		}
+		for (int i = 0; i < layer3.size(); i++) {
+			layer3.set(i, currentMinL3.get(i));
+		}
+	}
+	
+	/**
+	 * Helper function for the three layer crossing minimisation. It recursively applies re-ordering until there is
+	 * no reduction in the number of crossings anymore.
+	 * 
+	 * @param layer1
+	 *           first layer
+	 * @param layer2
+	 *           second layer
+	 * @param layer3
+	 *           third layer
+	 * @param numberOfCrossings
+	 *           the current best result
+	 */
+	private void threeLayerCrossingMin(ArrayList<Node> layer1, ArrayList<Node> layer2, ArrayList<Node> layer3, int numberOfCrossings) {
+		reorderLayer(layer2, layer1);
+		reorderLayer(layer3, layer2);
+		reorderLayer(layer2, layer3);
+		reorderLayer(layer1, layer2);
+		int newNumberOfCrossings = numberOfCrossings(layer1, layer2) + numberOfCrossings(layer2, layer3);
+		if (newNumberOfCrossings < numberOfCrossings) {
+			threeLayerCrossingMin(layer1, layer2, layer3, newNumberOfCrossings);
+		}
+	}
+	
+	/**
+	 * Helper function for the crossing minimisation. Re-orders the flexibleLayer according to the barycentre of
+	 * its neighbours within the fixedLayer.
+	 * 
+	 * @param flexibleLayer
+	 *           the layer to be re-ordered
+	 * @param fixedLayer
+	 *           the fixed layer
+	 */
+	private void reorderLayer(ArrayList<Node> flexibleLayer, ArrayList<Node> fixedLayer) {
 		HashMap<Node, Double> node2barycenter = new HashMap<>();
-		for (Node node : layer1) {
-			node2barycenter.put(node, Double.valueOf(getBarycenter(node, layer2)));
+		for (Node node : flexibleLayer) {
+			node2barycenter.put(node, Double.valueOf(getBarycenter(node, fixedLayer)));
 		}
 		// BubbleSort according to barycenter.
-		for (int i = 0; i < layer1.size() - 1; i++) {
+		for (int i = 0; i < flexibleLayer.size() - 1; i++) {
 			int m = i;
-			for (int j = i + 1; j < layer1.size(); j++) {
-				if (node2barycenter.get(layer1.get(j)).doubleValue() < node2barycenter.get(layer1.get(m))
-						.doubleValue()) {
+			for (int j = i + 1; j < flexibleLayer.size(); j++) {
+				if (node2barycenter.get(flexibleLayer.get(j)).doubleValue() < node2barycenter.get(flexibleLayer.get(m)).doubleValue()) {
 					m = j;
 				}
 			}
-			Collections.swap(layer1, i, m);
-		}
-		int newNumberOfCrossings = numberOfCrossings(layer1, layer2);
-		if (numberOfCrossings == -1 || newNumberOfCrossings < numberOfCrossings) {
-			crossingMin(layer2, layer1, newNumberOfCrossings);
+			Collections.swap(flexibleLayer, i, m);
 		}
 	}
 	

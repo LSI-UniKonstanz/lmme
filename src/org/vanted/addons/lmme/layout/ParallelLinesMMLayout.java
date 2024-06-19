@@ -19,8 +19,11 @@ import java.util.ArrayList;
 import org.AttributeHelper;
 import org.graffiti.graph.Graph;
 import org.graffiti.graph.Node;
+import org.vanted.addons.lmme.core.LMMEConstants;
+import org.vanted.addons.lmme.core.LMMEController;
 import org.vanted.addons.lmme.core.LMMETools;
 import org.vanted.addons.lmme.graphs.SubsystemGraph;
+import org.vanted.addons.lmme.ui.LMMESubsystemViewManagement;
 
 /**
  * A parallel lines layout method for a {@link SubsystemGraph}.
@@ -47,37 +50,61 @@ public class ParallelLinesMMLayout implements MMSubsystemLayout {
 		
 		ArrayList<Node> species = new ArrayList<>();
 		ArrayList<Node> reactions = new ArrayList<>();
+		ArrayList<Node> subsystems = new ArrayList<>();
 		for (Node node : graph.getNodes()) {
 			if (tools.isSpecies(node)) {
 				species.add(node);
 			} else if (tools.isReaction(node)) {
 				reactions.add(node);
+			} else if (LMMEController.getInstance().getCurrentSession().getNodeAttribute(node, LMMEConstants.NODETYPE_ATTRIBUTE_NAME)
+					.equals(LMMEConstants.NODETYPE_SUBSYSTEM)) {
+				subsystems.add(node);
 			}
 		}
 		
-		layoutTools.crossingMin(species, reactions);
-		
-		int xSpan = Math.max(60 * species.size(), 60 * reactions.size());
-		
-		int xPos = 0;
-		int xStep = xSpan / species.size();
-		for (int i = 0; i < species.size(); i++) {
-			AttributeHelper.setPosition(species.get(i), xPos, 100);
-			xPos += xStep;
+		if (!subsystems.isEmpty()) {
+			layoutTools.threeLayerCrossingMin(reactions, species, subsystems);
+		} else {
+			layoutTools.twoLayerCrossingMin(species, reactions);
 		}
 		
-		xPos = 0;
-		xStep = xSpan / reactions.size();
+		int nodeSize = LMMESubsystemViewManagement.getInstance().getNodeSize();
+		int subsystemNodeSize = LMMESubsystemViewManagement.getInstance().getSubsystemNodeSize();
+		
+		int ySpanSpecies = (nodeSize + 10) * species.size();
+		int ySpanReactions = (nodeSize + 10) * reactions.size();
+		int ySpanSubsystems = (subsystemNodeSize + 10) * subsystems.size();
+		
+		int ySpan = Math.max(Math.max(ySpanSpecies, ySpanReactions), ySpanSubsystems);
+		
+		int yStep = ySpan / reactions.size();
+		int yPos = yStep / 2;
 		for (int i = 0; i < reactions.size(); i++) {
-			AttributeHelper.setPosition(reactions.get(i), xPos, 700);
-			xPos += xStep;
+			AttributeHelper.setPosition(reactions.get(i), 100, yPos);
+			yPos += yStep;
+		}
+		
+		yStep = ySpan / species.size();
+		yPos = yStep / 2;
+		for (int i = 0; i < species.size(); i++) {
+			AttributeHelper.setPosition(species.get(i), 500, yPos);
+			yPos += yStep;
+		}
+		
+		if (!subsystems.isEmpty()) {
+			yStep = ySpan / subsystems.size();
+			yPos = yStep / 2;
+			for (int i = 0; i < subsystems.size(); i++) {
+				AttributeHelper.setPosition(subsystems.get(i), 1000, yPos);
+				yPos += yStep;
+			}
 		}
 		
 	}
 	
 	@Override
 	public String getName() {
-		return "Bipartite Graph";
+		return "Parallel Lines";
 	}
 	
 }

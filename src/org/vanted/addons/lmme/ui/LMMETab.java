@@ -40,6 +40,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -55,6 +56,7 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.statistics.HistogramDataset;
+import org.vanted.addons.lmme.analysis.FluxHighlighting;
 import org.vanted.addons.lmme.core.LMMEController;
 import org.vanted.addons.lmme.core.LMMESession;
 import org.vanted.addons.lmme.decomposition.MMDecompositionAlgorithm;
@@ -118,6 +120,7 @@ public class LMMETab extends InspectorTab {
 	
 	private JCheckBox ckbClearSubsView;
 	private JCheckBox ckbUseColorMapping;
+	private JCheckBox ckbShowRelatedSubsystems;
 	
 	private final int defaultSplitDeg = 15;
 	private JSlider sliderSplitDeg;
@@ -144,7 +147,8 @@ public class LMMETab extends InspectorTab {
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
 						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
-						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM } }));
+						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0,
+						TableLayoutConstants.MINIMUM, 5.0, TableLayoutConstants.MINIMUM, 5.0 } }));
 		mainPanel.setBackground(Color.WHITE);
 		
 		int rowCount = 1;
@@ -225,6 +229,9 @@ public class LMMETab extends InspectorTab {
 		mainPanel.add(instantiateORA(), "0," + rowCount);
 		rowCount += 2;
 		
+		mainPanel.add(instantiateFluxHighlighting(), "0," + rowCount);
+		rowCount += 2;
+		
 		mainPanel.add(createSubsystemsViewComponent(), "0," + rowCount);
 		rowCount += 2;
 		
@@ -250,6 +257,121 @@ public class LMMETab extends InspectorTab {
 		});
 		
 		LMMEController.getInstance().setTab(this);
+	}
+	
+	private JButton instantiateFluxHighlighting() {
+		
+		JFrame frameFluxHighlighting = new JFrame("Flux Highlighting");
+		frameFluxHighlighting.setLayout(new TableLayout(new double[][] { { TableLayoutConstants.FILL },
+				{ TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.MINIMUM, TableLayoutConstants.FILL } }));
+		JLabel lbl = new JLabel("<html><p>Reactions can be highlighted according to their flux values. "
+				+ "Within the overview graph, the absolute or relative amount of non-zero flux reactions can be used for the highlighting.</p>"
+				+ "<p></p>"
+				+ "<p> Please upload a file containing the reaction IDs and the associated flux values.</p>"
+				+ "<p> Per line, use the form <b>reactionID,value (double)</b>.</p></html>");
+		lbl.setBorder(new EmptyBorder(10, 15, 5, 15));
+		frameFluxHighlighting.add(lbl, "0,0");
+		
+		JCheckBox absoluteNumberCheckbox = new JCheckBox("Use absolute numbers", true);
+		absoluteNumberCheckbox.setToolTipText(
+				"If selected, the nodes in the overview graph will be highlighted according to the absolute number of non-zero flux reactions "
+						+ "that they contain. Otherwise, the relative number will be used.");
+		absoluteNumberCheckbox.setBorder(new EmptyBorder(5, 15, 5, 15));
+		
+		frameFluxHighlighting.add(absoluteNumberCheckbox, "0,1");
+		
+		JPanel loadFilePanel = new JPanel();
+//		loadFilePanel.setBackground(Color.WHITE);
+		loadFilePanel.setLayout(new TableLayout(new double[][] {
+				{ 15.0, TableLayoutConstants.FILL, TableLayoutConstants.MINIMUM, 15.0 },
+				{ 30.0, 15.0 } }));
+		String defaultTextForLoadFile = "No file selected.";
+		JTextField tfLoad = new JTextField(defaultTextForLoadFile);
+		tfLoad.setBackground(Color.WHITE);
+		tfLoad.setEditable(false);
+		JButton btnLoad = new JButton("Load");
+		btnLoad.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				int res = fc.showOpenDialog(null);
+				if (res == JFileChooser.APPROVE_OPTION) {
+					tfLoad.setText(fc.getSelectedFile().getAbsolutePath());
+				}
+			}
+		});
+		loadFilePanel.add(tfLoad, "1,0");
+		loadFilePanel.add(btnLoad, "2,0");
+		
+		frameFluxHighlighting.add(loadFilePanel, "0,2");
+		
+		JButton button1 = new JButton("<html><b>Color in Overview</b></html>");
+		JButton button2 = new JButton("<html><b>Color in Subsystem View</b></html>");
+		JButton button3 = new JButton("<html><b>Size in Overview</b></html>");
+		JButton button4 = new JButton("<html><b>Size in Subsystem View</b></html>");
+		
+		JPanel combinedPanel = new JPanel();
+		combinedPanel.setLayout(new TableLayout(new double[][] { { TableLayoutConstants.FILL, TableLayoutConstants.FILL },
+				{ TableLayoutConstants.FILL, TableLayoutConstants.FILL } }));
+		combinedPanel.add(button1, "0,0");
+		combinedPanel.add(button2, "1,0");
+		combinedPanel.add(button3, "0,1");
+		combinedPanel.add(button4, "1,1");
+		combinedPanel.setBackground(getBackground());
+		
+		frameFluxHighlighting.add(combinedPanel, "0,3");
+		
+		ActionListener al = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (!LMMEController.getInstance().getCurrentSession().isModelSet()) {
+					frameFluxHighlighting.setVisible(false);
+					return;
+				}
+				if (tfLoad.getText().equals(defaultTextForLoadFile)) {
+					JOptionPane.showMessageDialog(null,
+							"There was no file selected for the differentially expressed metabolites.");
+					frameFluxHighlighting.setVisible(false);
+					return;
+				}
+				
+				FluxHighlighting fh = new FluxHighlighting(tfLoad.getText());
+				
+				if (e.getSource().equals(button1) && LMMEController.getInstance().getCurrentSession().isOverviewGraphConstructed()) {
+					fh.highlightColorInOverview(absoluteNumberCheckbox.isSelected());
+				}
+				
+				if (e.getSource().equals(button2) && LMMEViewManagement.getInstance().getSubsystemFrame() != null) {
+					fh.highlightColorInSubsystemView();
+				}
+				
+				if (e.getSource().equals(button3) && LMMEController.getInstance().getCurrentSession().isOverviewGraphConstructed()) {
+					fh.highlightSizeInOverview(absoluteNumberCheckbox.isSelected());
+				}
+				
+				if (e.getSource().equals(button4) && LMMEViewManagement.getInstance().getSubsystemFrame() != null) {
+					fh.highlightSizeInSubsystemView();
+				}
+				
+				frameFluxHighlighting.setVisible(false);
+				
+			}
+		};
+		
+		button1.addActionListener(al);
+		button2.addActionListener(al);
+		button3.addActionListener(al);
+		button4.addActionListener(al);
+		
+		frameFluxHighlighting.setSize(400, 350);
+		frameFluxHighlighting.setLocationRelativeTo(null);
+		
+		JButton btnFluxHighlighting = new JButton("Flux Highlighting");
+		btnFluxHighlighting.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				frameFluxHighlighting.revalidate();
+				frameFluxHighlighting.setVisible(true);
+			}
+		});
+		return btnFluxHighlighting;
 	}
 	
 	private JButton instantiateORA() {
@@ -773,6 +895,11 @@ public class LMMETab extends InspectorTab {
 		ckbUseColorMapping.setBackground(Color.WHITE);
 		fp.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbUseColorMapping, 5, 0, 0, 0), null, true);
 		
+		this.ckbShowRelatedSubsystems = new JCheckBox("Show related subsystems");
+		ckbShowRelatedSubsystems.setSelected(false);
+		ckbShowRelatedSubsystems.setBackground(Color.WHITE);
+		fp.addGuiComponentRow(FolderPanel.getBorderedComponent(ckbShowRelatedSubsystems, 5, 0, 0, 0), null, true);
+		
 		return fp;
 	}
 	
@@ -1048,6 +1175,15 @@ public class LMMETab extends InspectorTab {
 	 */
 	public boolean getCkbUseColorMapping() {
 		return this.ckbUseColorMapping.isSelected();
+	}
+	
+	/**
+	 * Returns whether the show related subsystems checkbox is currently selected.
+	 * 
+	 * @return whether the show related subsystems checkbox is currently selected
+	 */
+	public boolean getCkbShowRelatedSubsystems() {
+		return this.ckbShowRelatedSubsystems.isSelected();
 	}
 	
 	/**
